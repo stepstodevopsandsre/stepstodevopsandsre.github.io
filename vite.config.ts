@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-const productionBase = "/stepstodevopsandsre/";
+const productionBase = "/";
 
 export default defineConfig(({ mode }) => ({
   plugins: [react()],
