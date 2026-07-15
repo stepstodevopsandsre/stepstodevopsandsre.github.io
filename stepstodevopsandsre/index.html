@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="A premium developer knowledge hub for blogs, interview prep, learning resources, roadmaps, notes, and project showcases."
+    />
+    <meta
+      name="keywords"
+      content="developer blog, interview questions, learning resources, roadmaps, cheat sheets, project showcase, GitHub Pages"
+    />
+    <meta name="theme-color" content="#0f172a" />
+    <meta property="og:title" content="Developer Knowledge Hub" />
+    <meta
+      property="og:description"
+      content="A scalable GitHub Pages-ready platform for sharing blogs, learning paths, interview prep, and developer projects."
+    />
+    <meta property="og:type" content="website" />
+    <title>Developer Knowledge Hub</title>
+    <script>
+      (function () {
+        var storedTheme = localStorage.getItem("theme");
+        var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        var theme = storedTheme || (prefersDark ? "dark" : "light");
+        document.documentElement.classList.toggle("dark", theme === "dark");
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
+  </head>
+  <body class="bg-canvas font-body text-text antialiased">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

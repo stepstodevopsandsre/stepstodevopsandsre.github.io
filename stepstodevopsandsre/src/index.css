@@ -1,0 +1,57 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --color-canvas: 248 250 252;
+  --color-surface: 255 255 255;
+  --color-elevated: 255 255 255;
+  --color-border: 203 213 225;
+  --color-text: 15 23 42;
+  --color-muted: 71 85 105;
+  --color-accent: 14 165 233;
+  --color-accent-soft: 224 242 254;
+  --color-success: 34 197 94;
+}
+
+.dark {
+  color-scheme: dark;
+  --color-canvas: 2 6 23;
+  --color-surface: 15 23 42;
+  --color-elevated: 30 41 59;
+  --color-border: 51 65 85;
+  --color-text: 226 232 240;
+  --color-muted: 148 163 184;
+  --color-accent: 56 189 248;
+  --color-accent-soft: 8 47 73;
+  --color-success: 74 222 128;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  background:
+    radial-gradient(circle at top, rgba(56, 189, 248, 0.06), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 35%);
+}
+
+.dark body {
+  background:
+    radial-gradient(circle at top, rgba(56, 189, 248, 0.08), transparent 24%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.45), transparent 35%);
+}
+
+::selection {
+  background: rgba(56, 189, 248, 0.25);
+}
+
+a,
+button {
+  -webkit-tap-highlight-color: transparent;
+}
