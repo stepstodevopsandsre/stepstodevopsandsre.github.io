@@ -1,11 +1,13 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
+const productionBase = "/stepstodevopsandsre/";
+
 export default defineConfig(({ mode }) => ({
   plugins: [react()],
-  // The requested production URL is https://stepstodevopsandsre.github.io/,
-  // so assets must resolve from the site root in production.
-  base: mode === "production" ? "/" : "/",
+  // This repository is published as a project site, so production assets
+  // must resolve from /stepstodevopsandsre/ rather than the domain root.
+  base: mode === "production" ? productionBase : "/",
   resolve: {
     alias: {
       "@": "/src"
