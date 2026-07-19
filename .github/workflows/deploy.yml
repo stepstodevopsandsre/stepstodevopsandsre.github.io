@@ -18,6 +18,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      VITE_BLOG_API_BASE_URL: ${{ vars.VITE_BLOG_API_BASE_URL }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
