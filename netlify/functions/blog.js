@@ -8,7 +8,7 @@ import {
   createExcerpt,
   getPageTitle,
   getPublishedFilter,
-  getSlugPropertyFilter,
+  getSlugFilter,
   isAllowedOrigin,
   parsePageMap,
   sanitizeArticleHtml
@@ -27,13 +27,18 @@ const resolvePageIdFromDatabase = async (notion, slug) => {
   }
 
   const slugProperty = process.env.NOTION_BLOG_SLUG_PROPERTY || "Slug";
+  const slugPropertyType = process.env.NOTION_BLOG_SLUG_PROPERTY_TYPE || "rich_text";
   const statusProperty = process.env.NOTION_BLOG_STATUS_PROPERTY || "Status";
+  const statusPropertyType = process.env.NOTION_BLOG_STATUS_PROPERTY_TYPE || "status";
   const publishedValue = process.env.NOTION_BLOG_PUBLISHED_VALUE || "Done";
 
   const response = await notion.databases.query({
     database_id: databaseId,
     filter: {
-      and: [getSlugPropertyFilter(slugProperty, slug), getPublishedFilter(statusProperty, publishedValue)]
+      and: [
+        getSlugFilter(slugProperty, slug, slugPropertyType),
+        getPublishedFilter(statusProperty, publishedValue, statusPropertyType)
+      ]
     },
     page_size: 1
   });

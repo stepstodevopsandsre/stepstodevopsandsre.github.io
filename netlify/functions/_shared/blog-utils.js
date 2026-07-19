@@ -41,39 +41,41 @@ export const getPageTitle = (page) => {
   return getPlainText(titleProperty?.title) || "Untitled Notion Article";
 };
 
-export const getSlugPropertyFilter = (propertyName, slug) => ({
-  or: [
-    {
-      property: propertyName,
-      rich_text: {
-        equals: slug
-      }
-    },
-    {
+export const getSlugFilter = (propertyName, slug, propertyType = "rich_text") => {
+  if (propertyType === "title") {
+    return {
       property: propertyName,
       title: {
         equals: slug
       }
-    }
-  ]
-});
+    };
+  }
 
-export const getPublishedFilter = (propertyName, publishedValue) => ({
-  or: [
-    {
-      property: propertyName,
-      status: {
-        equals: publishedValue
-      }
-    },
-    {
+  return {
+    property: propertyName,
+    rich_text: {
+      equals: slug
+    }
+  };
+};
+
+export const getPublishedFilter = (propertyName, publishedValue, propertyType = "status") => {
+  if (propertyType === "select") {
+    return {
       property: propertyName,
       select: {
         equals: publishedValue
       }
+    };
+  }
+
+  return {
+    property: propertyName,
+    status: {
+      equals: publishedValue
     }
-  ]
-});
+  };
+};
 
 export const stripMarkdown = (value) =>
   value

@@ -5,7 +5,7 @@ import {
   createExcerpt,
   getPageTitle,
   getPublishedFilter,
-  getSlugPropertyFilter,
+  getSlugFilter,
   isAllowedOrigin,
   parsePageMap,
   sanitizeArticleHtml
@@ -55,18 +55,30 @@ test("getPageTitle reads the first title property from a Notion page object", ()
   assert.equal(title, "Grafana Observability");
 });
 
-test("getSlugPropertyFilter supports rich_text or title properties", () => {
-  const filter = getSlugPropertyFilter("Slug", "grafana-observability-p95-p99-latency");
+test("getSlugFilter creates a rich_text filter by default", () => {
+  const filter = getSlugFilter("Slug", "grafana-observability-p95-p99-latency");
 
-  assert.equal(filter.or.length, 2);
-  assert.equal(filter.or[0].property, "Slug");
-  assert.equal(filter.or[1].title.equals, "grafana-observability-p95-p99-latency");
+  assert.equal(filter.property, "Slug");
+  assert.equal(filter.rich_text.equals, "grafana-observability-p95-p99-latency");
 });
 
-test("getPublishedFilter supports status or select properties", () => {
-  const filter = getPublishedFilter("Status", "Published");
+test("getSlugFilter can create a title filter", () => {
+  const filter = getSlugFilter("Slug", "post-slug", "title");
 
-  assert.equal(filter.or.length, 2);
-  assert.equal(filter.or[0].status.equals, "Published");
-  assert.equal(filter.or[1].select.equals, "Published");
+  assert.equal(filter.property, "Slug");
+  assert.equal(filter.title.equals, "post-slug");
+});
+
+test("getPublishedFilter creates a status filter by default", () => {
+  const filter = getPublishedFilter("Status", "Done");
+
+  assert.equal(filter.property, "Status");
+  assert.equal(filter.status.equals, "Done");
+});
+
+test("getPublishedFilter can create a select filter", () => {
+  const filter = getPublishedFilter("Status", "Published", "select");
+
+  assert.equal(filter.property, "Status");
+  assert.equal(filter.select.equals, "Published");
 });
