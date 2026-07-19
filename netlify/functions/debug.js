@@ -16,18 +16,12 @@ export const handler = async (event) => {
 
   try {
     const notion = new Client({ auth: notionToken });
-    const databaseId = "0c391e18-4cf4-48e8-918f-50cbface959c";
+    const blockId = "3a25aace-fb86-819a-9f18-f4226fc6ab7e";
     
-    const response = await notion.databases.query({
-      database_id: databaseId
+    const response = await notion.blocks.children.list({
+      block_id: blockId,
+      page_size: 100
     });
-
-    const entries = response.results.map(page => ({
-      id: page.id,
-      url: page.url,
-      parent: page.parent,
-      properties: page.properties
-    }));
 
     return {
       statusCode: 200,
@@ -35,14 +29,14 @@ export const handler = async (event) => {
         ...createCorsHeaders(requestOrigin || allowedOrigin),
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(entries)
+      body: JSON.stringify(response.results)
     };
   } catch (error) {
     return {
       statusCode: 500,
       headers: createCorsHeaders(requestOrigin || allowedOrigin),
       body: JSON.stringify({
-        error: error instanceof Error ? error.message : "Error querying database."
+        error: error instanceof Error ? error.message : "Error listing block children."
       })
     };
   }
