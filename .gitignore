@@ -5,3 +5,5 @@ node_modules
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
+.env.example
+.env

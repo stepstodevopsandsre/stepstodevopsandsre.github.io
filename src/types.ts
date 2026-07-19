@@ -19,6 +19,8 @@ export type Category = {
 };
 
 export type BlogPost = {
+  slug: string;
+  notionPageId?: string;
   title: string;
   summary: string;
   tag: string;
@@ -56,4 +58,16 @@ export type Project = {
 export type SocialLink = {
   label: string;
   href: string;
+};
+
+export type BlogArticle = {
+  slug: string;
+  title: string;
+  icon?: string;
+  url?: string;
+  excerpt: string;
+  html: string;
+  markdown: string;
+  readingTimeMinutes: number;
+  lastEditedTime?: string;
 };

@@ -1,3 +1,5 @@
+import { MotionReveal } from "./MotionReveal";
+
 type SectionHeadingProps = {
   eyebrow: string;
   title: string;
@@ -5,7 +7,7 @@ type SectionHeadingProps = {
 };
 
 export const SectionHeading = ({ eyebrow, title, description }: SectionHeadingProps) => (
-  <div className="max-w-2xl">
+  <MotionReveal className="max-w-2xl">
     <span className="inline-flex rounded-full border border-accent/20 bg-accentSoft px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-accent">
       {eyebrow}
     </span>
@@ -13,5 +15,5 @@ export const SectionHeading = ({ eyebrow, title, description }: SectionHeadingPr
       {title}
     </h2>
     <p className="mt-4 text-base leading-7 text-muted sm:text-lg">{description}</p>
-  </div>
+  </MotionReveal>
 );

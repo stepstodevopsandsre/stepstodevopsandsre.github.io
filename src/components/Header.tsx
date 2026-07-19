@@ -7,11 +7,11 @@ export const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-canvas/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-border/50 bg-canvas/70 backdrop-blur-2xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <a href="#home" className="flex items-center gap-3">
-          <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-accent text-sm font-bold text-slate-950 shadow-panel">
-            DH
+          <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/30 bg-text text-sm font-bold text-canvas shadow-glow">
+            SR
           </span>
           <div>
             <p className="font-display text-base font-semibold tracking-tight text-text">{site.name}</p>
@@ -39,10 +39,10 @@ export const Header = () => {
             href={site.githubUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 rounded-full bg-text px-5 py-3 text-sm font-semibold text-canvas transition hover:-translate-y-0.5 hover:opacity-90"
+            className="inline-flex items-center gap-2 rounded-full border border-text/10 bg-text px-5 py-3 text-sm font-semibold text-canvas transition hover:-translate-y-0.5 hover:opacity-90"
           >
             <Github size={16} />
-            Star Repository
+            View Repository
           </a>
         </div>
 
@@ -52,7 +52,7 @@ export const Header = () => {
             type="button"
             aria-label="Toggle navigation"
             onClick={() => setMenuOpen((current) => !current)}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface text-text"
+            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/80 bg-surface/85 text-text"
           >
             {menuOpen ? <X size={18} /> : <AlignRight size={18} />}
           </button>
@@ -60,7 +60,7 @@ export const Header = () => {
       </div>
 
       {menuOpen ? (
-        <div className="border-t border-border/60 bg-canvas px-4 py-4 lg:hidden">
+        <div className="border-t border-border/50 bg-canvas/95 px-4 py-4 lg:hidden">
           <nav className="mx-auto flex max-w-7xl flex-col gap-2">
             {navigation.map((item) => (
               <a

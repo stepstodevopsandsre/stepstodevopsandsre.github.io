@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -6,28 +6,29 @@
 
 :root {
   color-scheme: light;
-  --color-canvas: 248 250 252;
+  --color-canvas: 246 247 251;
   --color-surface: 255 255 255;
   --color-elevated: 255 255 255;
-  --color-border: 203 213 225;
+  --color-border: 218 223 233;
   --color-text: 15 23 42;
-  --color-muted: 71 85 105;
+  --color-muted: 84 97 120;
   --color-accent: 14 165 233;
-  --color-accent-soft: 224 242 254;
-  --color-success: 34 197 94;
+  --color-accent-soft: 230 247 255;
+  --color-success: 5 150 105;
+  background-color: rgb(var(--color-canvas));
 }
 
 .dark {
   color-scheme: dark;
-  --color-canvas: 2 6 23;
+  --color-canvas: 5 10 23;
   --color-surface: 15 23 42;
-  --color-elevated: 30 41 59;
-  --color-border: 51 65 85;
-  --color-text: 226 232 240;
-  --color-muted: 148 163 184;
+  --color-elevated: 22 32 56;
+  --color-border: 49 61 92;
+  --color-text: 232 238 248;
+  --color-muted: 153 167 191;
   --color-accent: 56 189 248;
   --color-accent-soft: 8 47 73;
-  --color-success: 74 222 128;
+  --color-success: 52 211 153;
 }
 
 html {
@@ -36,15 +37,24 @@ html {
 
 body {
   min-width: 320px;
+  margin: 0;
   background:
-    radial-gradient(circle at top, rgba(56, 189, 248, 0.06), transparent 24%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 35%);
+    radial-gradient(circle at top left, rgba(251, 113, 133, 0.08), transparent 26%),
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.1), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.55), transparent 35%);
+  color: rgb(var(--color-text));
+  font-feature-settings: "ss01" 1, "cv02" 1, "cv03" 1;
 }
 
 .dark body {
   background:
-    radial-gradient(circle at top, rgba(56, 189, 248, 0.08), transparent 24%),
+    radial-gradient(circle at top left, rgba(251, 113, 133, 0.08), transparent 24%),
+    radial-gradient(circle at top right, rgba(56, 189, 248, 0.11), transparent 22%),
     linear-gradient(180deg, rgba(15, 23, 42, 0.45), transparent 35%);
+}
+
+#root {
+  min-height: 100vh;
 }
 
 ::selection {
@@ -54,4 +64,15 @@ body {
 a,
 button {
   -webkit-tap-highlight-color: transparent;
+}
+
+.prose pre {
+  overflow-x: auto;
+  border-radius: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.prose code::before,
+.prose code::after {
+  content: none;
 }

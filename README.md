@@ -1,14 +1,14 @@
-# stepstodevopsandsre
+# Steps to DevOps and SRE
 
-Existing static site prepared for GitHub Pages production deployment with Vite, React, TypeScript, and Tailwind CSS.
+This repository hosts the GitHub Pages frontend for [https://stepstodevopsandsre.github.io/](https://stepstodevopsandsre.github.io/). It is a static Vite + React + TypeScript site with a secure Netlify function layer for fetching canonical blog content from Notion.
 
-## Framework and Build
+## Stack
 
-- Framework: Vite + React + TypeScript
-- Styling: Tailwind CSS
-- Dev command: `npm run dev`
-- Production build: `npm run build`
-- Output directory: `dist/`
+- Vite + React + TypeScript
+- Tailwind CSS
+- Framer Motion
+- GitHub Pages for the static frontend
+- Netlify Functions for secure Notion access
 
 ## Local Development
 
@@ -18,75 +18,136 @@ Install dependencies:
 npm install
 ```
 
-Start the dev server:
+Start the static frontend:
 
 ```bash
 npm run dev
 ```
 
-Create a production build:
+For the full frontend + function flow, use Netlify locally so the browser can call the serverless endpoint:
+
+```bash
+npx netlify dev
+```
+
+## Build
+
+Create the production frontend build:
 
 ```bash
 npm run build
 ```
 
-Preview the production build locally:
+Run the lightweight validation tests:
 
 ```bash
-npm run preview
+npm test
 ```
+
+## Environment Variables
+
+Create a local `.env` based on `.env.example`.
+
+Required frontend variable:
+
+```bash
+VITE_BLOG_API_BASE_URL=https://your-netlify-site.netlify.app
+```
+
+Required Netlify function variables:
+
+```bash
+NOTION_TOKEN=secret_your_notion_integration_token
+NOTION_BLOG_DATABASE_ID=your_notion_blog_database_id
+NOTION_BLOG_SLUG_PROPERTY=Slug
+NOTION_BLOG_STATUS_PROPERTY=Status
+NOTION_BLOG_PUBLISHED_VALUE=Published
+ALLOWED_ORIGIN=https://stepstodevopsandsre.github.io
+```
+
+Legacy fallback only:
+
+```bash
+NOTION_BLOG_PAGE_MAP={"grafana-observability-p95-p99-latency":"3a15aace-fb86-8180-b37a-e46f5847cad7"}
+```
+
+## Recommended Notion Model
+
+Use a Notion database as the publishing index instead of maintaining a JSON slug map.
+
+Recommended database properties:
+
+- `Name` as the database title property
+- `Slug` as a `rich_text` or `title` property containing the URL slug
+- `Status` as a `status` or `select` property
+
+Recommended publishing rule:
+
+- Each blog article should live in the database as its own row page.
+- The row page content is the article body.
+- Set `Status` to `Published` when it is ready for the site.
+
+Request flow:
+
+1. A visitor opens a GitHub Pages blog route like `#/blog/grafana-observability-p95-p99-latency`.
+2. The frontend calls the Netlify function with that slug.
+3. The Netlify function queries the Notion database for `Slug = slug` and `Status = Published`.
+4. The matching Notion row page is converted to Markdown and sanitized HTML.
+5. The article is rendered in the GitHub Pages frontend.
+
+No page-id mapping needs to be updated when new posts are added, as long as the Notion database entry is created correctly.
+
+## How the Notion Blog Flow Works
+
+1. Blog content stays canonical in Notion.
+2. The GitHub Pages frontend calls the Netlify endpoint `/.netlify/functions/blog?slug=...`.
+3. The Netlify function reads the matching published Notion page using the server-side token.
+4. The function converts Notion blocks to Markdown and sanitized HTML.
+5. CORS allows requests only from `https://stepstodevopsandsre.github.io` and local development.
+
+No Notion secret is exposed in the browser or in the GitHub Pages deployment.
 
 ## GitHub Pages Deployment
 
-This repository includes a GitHub Actions workflow at `.github/workflows/deploy.yml` that:
+The workflow at `.github/workflows/deploy.yml` builds the static frontend and deploys `dist/` using the official GitHub Pages actions.
 
-- triggers on pushes to `main`
-- installs dependencies with `npm ci`
-- builds the site with `npm run build`
-- uploads `dist/`
-- deploys with the official GitHub Pages actions
+GitHub settings required:
 
-### Required Repository Setting
+1. Open `Repository -> Settings -> Pages`
+2. Set `Source` to `GitHub Actions`
 
-In GitHub, open:
+Vite is configured with `base: "/"` because this repository is intended to be the account site repository: `stepstodevopsandsre.github.io`.
+
+## Important 404 Diagnosis
+
+As of July 19, 2026, the public GitHub API for `stepstodevopsandsre/stepstodevopsandsre.github.io` reports `has_pages: false`. That means the current 404 is not caused by the frontend code or asset paths; GitHub Pages is not actively attached to the repository yet, even if the Actions workflow completed successfully.
+
+If the site still shows GitHub's default 404 page, re-open:
 
 `Repository -> Settings -> Pages`
 
-Set:
+and confirm again that the source is set to `GitHub Actions` on the renamed repository itself.
 
-- Source: `GitHub Actions`
+## Expected URLs
 
-## Production URL
+- GitHub Pages frontend: [https://stepstodevopsandsre.github.io/](https://stepstodevopsandsre.github.io/)
+- Netlify API base: `https://your-netlify-site.netlify.app`
+- Sample live blog route: `https://stepstodevopsandsre.github.io/#/blog/grafana-observability-p95-p99-latency`
 
-Target production URL:
+## Files Added for the Notion Integration
 
-[https://stepstodevopsandsre.github.io/](https://stepstodevopsandsre.github.io/)
+- `netlify/functions/blog.js`
+- `netlify/functions/_shared/blog-utils.js`
+- `netlify.toml`
+- `tests/blog-utils.test.mjs`
+- `.env.example`
 
-The Vite production base is configured as `/` so assets resolve from the site root.
+## Deployment Sequence
 
-## Important Repository Requirement
-
-For the site to actually publish at the root URL above, GitHub Pages must serve this project as the account site. In practice, that means the published repository should be:
-
-`stepstodevopsandsre/stepstodevopsandsre.github.io`
-
-If the repository remains `stepstodevopsandsre/stepstodevopsandsre`, GitHub Pages normally publishes it as a project site at:
-
-[https://stepstodevopsandsre.github.io/stepstodevopsandsre/](https://stepstodevopsandsre.github.io/stepstodevopsandsre/)
-
-## Static Hosting Compatibility Notes
-
-- No SSR dependency detected; this is a client-built static Vite app.
-- Build output is static and suitable for GitHub Pages.
-- No app router was found; current navigation is section-anchor based, so SPA fallback handling is not required.
-- No local image import issues were detected in the current source tree.
-- Asset resolution is configured for root-hosted Pages deployment.
-
-## Deployment Process
-
-1. Commit the deployment configuration changes.
-2. Push the branch to GitHub.
-3. Ensure the default deployment branch is `main`, or push these commits to `main`.
-4. Confirm `Settings -> Pages -> Source` is set to `GitHub Actions`.
-5. Wait for the `Deploy GitHub Pages` workflow to finish.
-6. Open the published site URL.
+1. Push this repository to `main`.
+2. Wait for the `Deploy GitHub Pages` workflow to finish.
+3. In Netlify, connect the repo and configure the function environment variables.
+4. Create the Notion blog database and share it with the Notion integration token.
+5. Add a row page for each article and set its `Slug` and `Status`.
+6. Confirm the Pages site is active in GitHub settings.
+7. Open the GitHub Pages URL and test the sample blog route.
