@@ -95,6 +95,22 @@ export const handler = async (event) => {
   try {
     const notion = new Client({ auth: notionToken });
     const notionToMarkdown = new NotionToMarkdown({ notionClient: notion });
+
+    // Custom transformers for responsive multi-column layouts
+    notionToMarkdown.setCustomTransformer("column_list", async (block) => {
+      const { id } = block;
+      const mdBlocks = await notionToMarkdown.pageToMarkdown(id);
+      const mdString = notionToMarkdown.toMarkdownString(mdBlocks);
+      return `<div class="notion-column-list">${mdString.parent}</div>`;
+    });
+
+    notionToMarkdown.setCustomTransformer("column", async (block) => {
+      const { id } = block;
+      const mdBlocks = await notionToMarkdown.pageToMarkdown(id);
+      const mdString = notionToMarkdown.toMarkdownString(mdBlocks);
+      return `<div class="notion-column">${mdString.parent}</div>`;
+    });
+
     const pageId = (await resolvePageIdFromDatabase(notion, slug)) || pageMap[slug];
 
     if (!pageId) {

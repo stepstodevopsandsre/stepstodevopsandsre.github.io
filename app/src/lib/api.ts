@@ -1,4 +1,4 @@
-import type { BlogArticle } from "@/types";
+import type { BlogArticle, BlogPost } from "@/types";
 
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 const DEFAULT_PRODUCTION_API_BASE_URL = "https://stepstodevopsandsre.netlify.app";
@@ -21,12 +21,15 @@ const getApiBaseUrl = () => {
   return "";
 };
 
-export const getBlogEndpoint = (slug: string) => {
+const getEndpoint = (path: string) => {
   const baseUrl = getApiBaseUrl();
-  const path = `/.netlify/functions/blog?slug=${encodeURIComponent(slug)}`;
-
   return baseUrl ? `${baseUrl}${path}` : path;
 };
+
+export const getBlogEndpoint = (slug: string) =>
+  getEndpoint(`/.netlify/functions/blog?slug=${encodeURIComponent(slug)}`);
+
+export const getBlogsEndpoint = () => getEndpoint("/.netlify/functions/blogs");
 
 export const fetchBlogArticle = async (slug: string): Promise<BlogArticle> => {
   const response = await fetch(getBlogEndpoint(slug), {
@@ -51,4 +54,19 @@ export const fetchBlogArticle = async (slug: string): Promise<BlogArticle> => {
   }
 
   return response.json() as Promise<BlogArticle>;
+};
+
+export const fetchPublishedBlogs = async (): Promise<BlogPost[]> => {
+  const response = await fetch(getBlogsEndpoint(), {
+    headers: {
+      Accept: "application/json"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Unable to load blog index (${response.status}).`);
+  }
+
+  const payload = (await response.json()) as { posts?: BlogPost[] };
+  return payload.posts ?? [];
 };

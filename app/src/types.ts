@@ -26,6 +26,8 @@ export type BlogPost = {
   tag: string;
   readTime: string;
   href: string;
+  publishedDate?: string;
+  featured?: boolean;
 };
 
 export type InterviewTopic = {

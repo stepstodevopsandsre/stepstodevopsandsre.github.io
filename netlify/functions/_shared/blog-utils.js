@@ -41,6 +41,69 @@ export const getPageTitle = (page) => {
   return getPlainText(titleProperty?.title) || "Untitled Notion Article";
 };
 
+export const parseNotionPageToPost = (page, slugProperty = "Slug") => {
+  const properties = page.properties || {};
+
+  // Extract Title
+  const titleProperty = Object.values(properties).find((p) => p?.type === "title");
+  const title = getPlainText(titleProperty?.title) || "Untitled Notion Article";
+
+  // Extract Slug
+  const slugProp = properties[slugProperty] || Object.values(properties).find((p) => p?.type === "rich_text");
+  let slug = "";
+  if (slugProp && slugProp.type === "rich_text") {
+    slug = getPlainText(slugProp.rich_text);
+  } else if (slugProp && slugProp.type === "title") {
+    slug = getPlainText(slugProp.title);
+  }
+  if (!slug) {
+    slug = page.id;
+  }
+
+  // Extract Tag/Category
+  const tagProperty = properties["Tag"] || properties["Category"] || Object.values(properties).find((p) => p?.type === "select" || p?.type === "multi_select");
+  let tag = "DevOps";
+  if (tagProperty) {
+    if (tagProperty.type === "select" && tagProperty.select) {
+      tag = tagProperty.select.name;
+    } else if (tagProperty.type === "multi_select" && tagProperty.multi_select && tagProperty.multi_select.length > 0) {
+      tag = tagProperty.multi_select[0].name;
+    }
+  }
+
+  // Extract Summary/Excerpt
+  const summaryProperty = properties["Summary"] || properties["Excerpt"] || properties["Description"] || Object.values(properties).find((p) => p?.type === "rich_text" && p !== slugProp);
+  let summary = "";
+  if (summaryProperty && summaryProperty.type === "rich_text") {
+    summary = getPlainText(summaryProperty.rich_text);
+  }
+  if (!summary) {
+    summary = "A Notion-backed engineering writeup.";
+  }
+
+  // Read Time
+  const readTimeProperty = properties["Read Time"] || properties["Reading Time"];
+  let readTime = "5 min read";
+  if (readTimeProperty) {
+    if (readTimeProperty.type === "number") {
+      readTime = `${readTimeProperty.number} min read`;
+    } else if (readTimeProperty.type === "rich_text") {
+      readTime = getPlainText(readTimeProperty.rich_text);
+    }
+  }
+
+  return {
+    slug,
+    notionPageId: page.id,
+    title,
+    summary,
+    tag,
+    readTime,
+    href: `#/blog/${slug}`,
+    lastEditedTime: page.last_edited_time
+  };
+};
+
 export const getSlugFilter = (propertyName, slug, propertyType = "rich_text") => {
   if (propertyType === "title") {
     return {
@@ -124,6 +187,8 @@ export const sanitizeArticleHtml = (html) =>
       img: ["src", "alt", "title"],
       "*": ["class"]
     },
+    allowedSchemes: ["http", "https", "ftp", "mailto", "tel", "data"],
+    allowedSchemesAppliedToAttributes: ["href", "cite"],
     transformTags: {
       a: sanitizeHtml.simpleTransform("a", {
         rel: "noreferrer",
