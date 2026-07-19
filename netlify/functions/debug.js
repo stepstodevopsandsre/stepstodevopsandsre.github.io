@@ -18,6 +18,9 @@ export const handler = async (event) => {
     const notion = new Client({ auth: notionToken });
     const pageId = "3a15aace-fb86-8180-b37a-e46f5847cad7";
     
+    // Fetch page metadata
+    const page = await notion.pages.retrieve({ page_id: pageId });
+
     // Fetch top-level block children
     const response = await notion.blocks.children.list({
       block_id: pageId,
@@ -44,7 +47,7 @@ export const handler = async (event) => {
         ...createCorsHeaders(requestOrigin || allowedOrigin),
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ blocks: blocksWithChildren })
+      body: JSON.stringify({ page, blocks: blocksWithChildren })
     };
   } catch (error) {
     return {
