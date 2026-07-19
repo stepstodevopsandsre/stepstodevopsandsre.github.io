@@ -7,3 +7,12 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+interface Window {
+  mermaid?: {
+    initialize: (config: Record<string, unknown>) => void;
+    run: (opts: { querySelector: string }) => void;
+  };
+  __mermaidLoaded?: boolean;
+}
+

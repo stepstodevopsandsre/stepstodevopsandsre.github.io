@@ -56,6 +56,45 @@ export const BlogArticlePage = ({ slug }: BlogArticlePageProps) => {
     };
   }, [slug]);
 
+  // After article HTML is injected, load Mermaid.js and render diagrams
+  useEffect(() => {
+    if (state.status !== "success") return;
+
+    const initMermaid = () => {
+      if (typeof window.mermaid === "undefined") return;
+      try {
+        window.mermaid.initialize({
+          startOnLoad: false,
+          theme: "dark",
+          themeVariables: {
+            background: "#0b0f19",
+            primaryColor: "#1e293b",
+            primaryTextColor: "#e2e8f0",
+            lineColor: "#94a3b8",
+            edgeLabelBackground: "#1e293b"
+          }
+        });
+        window.mermaid.run({ querySelector: ".mermaid" });
+      } catch {
+        // Silently ignore mermaid render errors
+      }
+    };
+
+    // Load Mermaid from CDN if not already loaded
+    if (!window.__mermaidLoaded) {
+      window.__mermaidLoaded = true;
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js";
+      script.async = true;
+      script.onload = initMermaid;
+      document.head.appendChild(script);
+    } else {
+      // Already loaded — just run
+      initMermaid();
+    }
+  }, [state.status]);
+
+
   return (
     <main className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
       <MotionReveal>

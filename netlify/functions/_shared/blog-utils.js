@@ -173,6 +173,8 @@ export const sanitizeArticleHtml = (html) =>
       "h2",
       "h3",
       "img",
+      "figure",
+      "figcaption",
       "table",
       "thead",
       "tbody",
@@ -180,7 +182,8 @@ export const sanitizeArticleHtml = (html) =>
       "th",
       "td",
       "pre",
-      "code"
+      "code",
+      "span"
     ]),
     allowedAttributes: {
       a: ["href", "name", "target", "rel"],
