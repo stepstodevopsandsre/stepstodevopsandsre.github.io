@@ -92,6 +92,13 @@ export const parseNotionPageToPost = (page, slugProperty = "Slug") => {
     }
   }
 
+  // Extract Domain and Module (hierarchy breadcrumb fields)
+  const domainProp = properties["Domain"];
+  const domain = domainProp?.type === "rich_text" ? getPlainText(domainProp.rich_text) : "";
+
+  const moduleProp = properties["Module"];
+  const module = moduleProp?.type === "rich_text" ? getPlainText(moduleProp.rich_text) : "";
+
   return {
     slug,
     notionPageId: page.id,
@@ -99,6 +106,8 @@ export const parseNotionPageToPost = (page, slugProperty = "Slug") => {
     summary,
     tag,
     readTime,
+    domain: domain || undefined,
+    module: module || undefined,
     href: `#/blog/${slug}`,
     lastEditedTime: page.last_edited_time
   };

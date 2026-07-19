@@ -28,6 +28,8 @@ export type BlogPost = {
   href: string;
   publishedDate?: string;
   featured?: boolean;
+  domain?: string;   // e.g. "Linux", "Kubernetes" — maps to Notion Domain page
+  module?: string;   // e.g. "System Internals & Troubleshooting" — maps to Notion Module page
 };
 
 export type InterviewTopic = {
