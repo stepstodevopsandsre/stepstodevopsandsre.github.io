@@ -1,4 +1,4 @@
-import { AlertCircle, ArrowLeft, Clock3, ExternalLink, LoaderCircle } from "lucide-react";
+import { AlertCircle, ArrowLeft, Clock3, LoaderCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { latestBlogs } from "@/data/siteContent";
 import { fetchBlogArticle } from "@/lib/api";
@@ -71,7 +71,7 @@ export const BlogArticlePage = ({ slug }: BlogArticlePageProps) => {
       <MotionReveal className="mt-8 rounded-[2rem] border border-border/70 bg-surface/80 p-6 shadow-panel backdrop-blur sm:p-8" delay={0.05}>
         <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
           <span className="rounded-full border border-accent/20 bg-accentSoft px-3 py-1 font-semibold uppercase tracking-[0.18em] text-accent">
-            Notion-backed article
+            Rendered on GitHub Pages
           </span>
           {fallback ? <span>{fallback.tag}</span> : null}
           {state.status === "success" ? (
@@ -90,27 +90,15 @@ export const BlogArticlePage = ({ slug }: BlogArticlePageProps) => {
         <p className="mt-5 max-w-2xl text-base leading-8 text-muted sm:text-lg">
           {state.status === "success"
             ? state.article.excerpt
-            : fallback?.summary ?? "Loading the latest Notion content through the secure Netlify bridge."}
+            : fallback?.summary ?? "Loading the latest blog content through the secure Netlify bridge."}
         </p>
-
-        {state.status === "success" && state.article.url ? (
-          <a
-            href={state.article.url}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-accent"
-          >
-            Open original Notion page
-            <ExternalLink size={15} />
-          </a>
-        ) : null}
       </MotionReveal>
 
       {state.status === "loading" ? (
         <MotionReveal className="mt-8 flex min-h-[18rem] items-center justify-center rounded-[2rem] border border-border/70 bg-surface/75 p-8 shadow-panel" delay={0.1}>
           <div className="flex items-center gap-3 text-muted">
             <LoaderCircle className="animate-spin" size={20} />
-            Loading secure Notion content...
+            Loading article content...
           </div>
         </MotionReveal>
       ) : null}
@@ -123,7 +111,7 @@ export const BlogArticlePage = ({ slug }: BlogArticlePageProps) => {
               <h2 className="font-display text-2xl font-semibold text-text">Article unavailable</h2>
               <p className="mt-3 text-sm leading-7 text-muted">{state.message}</p>
               <p className="mt-3 text-sm leading-7 text-muted">
-                For local development, run the frontend with Netlify so the browser can reach the function endpoint.
+                The article should render here directly after the Netlify function returns the Notion content.
               </p>
             </div>
           </div>
