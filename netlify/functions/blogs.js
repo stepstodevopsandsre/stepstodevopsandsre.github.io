@@ -40,6 +40,17 @@ export const handler = async (event) => {
   const statusPropertyType = process.env.NOTION_BLOG_STATUS_PROPERTY_TYPE || "status";
   const publishedValue = process.env.NOTION_BLOG_PUBLISHED_VALUE || "Done";
 
+  const pageSizeParam = event.queryStringParameters?.pageSize;
+  const cursorParam = event.queryStringParameters?.cursor;
+  const pageSize = pageSizeParam ? Math.min(Math.max(parseInt(pageSizeParam, 10) || 10, 1), 100) : 10;
+  const startCursor = cursorParam || undefined;
+
+  const cacheHeaders = {
+    ...createCorsHeaders(requestOrigin || allowedOrigin),
+    "Content-Type": "application/json",
+    "Cache-Control": "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400"
+  };
+
   if (!notionToken) {
     return {
       statusCode: 500,
@@ -57,23 +68,21 @@ export const handler = async (event) => {
       const parsedPost = parseNotionPageToPost(page, slugProperty);
       return {
         statusCode: 200,
-        headers: {
-          ...createCorsHeaders(requestOrigin || allowedOrigin),
-          "Content-Type": "application/json"
-        },
+        headers: cacheHeaders,
         body: JSON.stringify({
-          posts: [parsedPost]
+          posts: [parsedPost],
+          hasMore: false,
+          nextCursor: null
         })
       };
     } catch (error) {
       return {
         statusCode: 200,
-        headers: {
-          ...createCorsHeaders(requestOrigin || allowedOrigin),
-          "Content-Type": "application/json"
-        },
+        headers: cacheHeaders,
         body: JSON.stringify({
           posts: [],
+          hasMore: false,
+          nextCursor: null,
           warning: "NOTION_BLOG_DATABASE_ID is not configured and fallback retrieval failed."
         })
       };
@@ -90,18 +99,21 @@ export const handler = async (event) => {
           timestamp: "last_edited_time",
           direction: "descending"
         }
-      ]
+      ],
+      page_size: pageSize,
+      start_cursor: startCursor
     });
 
     const posts = response.results.map((page) => parseNotionPageToPost(page, slugProperty));
 
     return {
       statusCode: 200,
-      headers: {
-        ...createCorsHeaders(requestOrigin || allowedOrigin),
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ posts })
+      headers: cacheHeaders,
+      body: JSON.stringify({
+        posts,
+        hasMore: response.has_more ?? false,
+        nextCursor: response.next_cursor ?? null
+      })
     };
   } catch (error) {
     return {

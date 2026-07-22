@@ -9,8 +9,17 @@ import {
   isAllowedOrigin,
   parsePageMap,
   sanitizeArticleHtml,
-  parseNotionPageToPost
+  parseNotionPageToPost,
+  cleanNotionText
 } from "../netlify/functions/_shared/blog-utils.js";
+
+test("cleanNotionText replaces Notion formatting artifacts correctly", () => {
+  assert.equal(cleanNotionText("text****text"), "text text");
+  assert.equal(cleanNotionText("text**text"), "text text");
+  assert.equal(cleanNotionText("text —text"), "text-text");
+  assert.equal(cleanNotionText("text, and text"), "text and text");
+  assert.equal(cleanNotionText("text, or text"), "text or text");
+});
 
 test("parsePageMap merges env-provided slugs with defaults", () => {
   const pageMap = parsePageMap('{"incident-review":"abc"}');

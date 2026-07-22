@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { LoaderCircle } from "lucide-react";
 import { AboutSection } from "@/components/AboutSection";
 import { BlogArticlePage } from "@/components/BlogArticlePage";
 import { BlogFilters } from "@/components/BlogFilters";
@@ -14,14 +15,28 @@ import {
   site
 } from "@/data/siteContent";
 import { getBlogHref, getRouteFromHash, type AppRoute } from "@/lib/routes";
-import { fetchPublishedBlogs } from "@/lib/api";
+import { fetchPublishedBlogs, getCachedBlogs } from "@/lib/api";
 import type { BlogPost } from "@/types";
 
 const cardClassName =
   "rounded-[1.75rem] border border-border/70 bg-surface/75 p-6 shadow-panel backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-accent/35 hover:bg-elevated";
 
-const HomePage = ({ posts }: { posts: BlogPost[] }) => {
-  const displayPosts = posts.length > 0 ? posts : latestBlogs;
+interface HomePageProps {
+  posts: BlogPost[];
+  isLoading: boolean;
+  hasMore: boolean;
+  isLoadingMore: boolean;
+  onLoadMore: () => void;
+}
+
+const HomePage = ({
+  posts,
+  isLoading,
+  hasMore,
+  isLoadingMore,
+  onLoadMore
+}: HomePageProps) => {
+  const displayPosts = posts.length > 0 ? posts : (isLoading ? [] : latestBlogs);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [domainFilter, setDomainFilter] = useState("all");
 
@@ -72,7 +87,13 @@ const HomePage = ({ posts }: { posts: BlogPost[] }) => {
           />
         }
       >
-        {filteredPosts.length === 0 ? (
+        {isLoading && displayPosts.length === 0 ? (
+          <div className="col-span-full flex min-h-[16rem] flex-col items-center justify-center rounded-[1.75rem] border border-border/70 bg-surface/75 p-8 text-center shadow-panel backdrop-blur">
+            <LoaderCircle className="animate-spin text-accent" size={36} />
+            <p className="mt-4 text-base font-semibold text-text">Pulling articles from Notion…</p>
+            <p className="mt-1 text-xs text-muted">Loading latest DevOps & SRE writeups</p>
+          </div>
+        ) : filteredPosts.length === 0 ? (
           <div className="col-span-full rounded-[1.75rem] border border-border/70 bg-surface/75 p-8 text-center shadow-panel">
             <p className="text-muted">No articles match the selected filters.</p>
             {hasActiveFilters && (
@@ -107,6 +128,26 @@ const HomePage = ({ posts }: { posts: BlogPost[] }) => {
             </MotionReveal>
           ))
         )}
+
+        {hasMore && !hasActiveFilters && (
+          <div className="col-span-full mt-4 flex justify-center">
+            <button
+              type="button"
+              onClick={onLoadMore}
+              disabled={isLoadingMore}
+              className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-surface/90 px-6 py-3 text-sm font-semibold text-text shadow-panel backdrop-blur transition hover:border-accent/40 hover:bg-elevated disabled:opacity-50"
+            >
+              {isLoadingMore ? (
+                <>
+                  <LoaderCircle className="animate-spin text-accent" size={16} />
+                  Loading more articles…
+                </>
+              ) : (
+                <>Load More Articles ↓</>
+              )}
+            </button>
+          </div>
+        )}
       </ContentGrid>
 
       <FeaturedCategories />
@@ -139,6 +180,10 @@ const HomePage = ({ posts }: { posts: BlogPost[] }) => {
 function App() {
   const [route, setRoute] = useState<AppRoute>(() => getRouteFromHash(window.location.hash));
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
+  const [isLoadingBlogs, setIsLoadingBlogs] = useState<boolean>(true);
+  const [hasMore, setHasMore] = useState<boolean>(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
 
   useEffect(() => {
     const updateRoute = () => setRoute(getRouteFromHash(window.location.hash));
@@ -152,16 +197,64 @@ function App() {
   }, []);
 
   useEffect(() => {
-    fetchPublishedBlogs()
+    let mounted = true;
+
+    // Check cached data synchronously for instant initial load
+    const cached = getCachedBlogs();
+    if (cached && cached.posts.length > 0) {
+      setBlogs(cached.posts);
+      setHasMore(cached.hasMore);
+      setNextCursor(cached.nextCursor);
+      setIsLoadingBlogs(false);
+    }
+
+    // Fetch initial page from network (with stale-while-revalidate background callback)
+    fetchPublishedBlogs(undefined, 10, (freshData) => {
+      if (mounted && freshData.posts.length > 0) {
+        setBlogs(freshData.posts);
+        setHasMore(freshData.hasMore);
+        setNextCursor(freshData.nextCursor);
+      }
+    })
       .then((data) => {
-        if (data && data.length > 0) {
-          setBlogs(data);
+        if (mounted && data.posts.length > 0) {
+          setBlogs(data.posts);
+          setHasMore(data.hasMore);
+          setNextCursor(data.nextCursor);
         }
       })
       .catch((err) => {
         console.error("Failed to fetch published blogs dynamically:", err);
+      })
+      .finally(() => {
+        if (mounted) {
+          setIsLoadingBlogs(false);
+        }
       });
+
+    return () => {
+      mounted = false;
+    };
   }, []);
+
+  const handleLoadMore = async () => {
+    if (!nextCursor || isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      const res = await fetchPublishedBlogs(nextCursor, 10);
+      setBlogs((prev) => {
+        const existingSlugs = new Set(prev.map((p) => p.slug));
+        const newPosts = res.posts.filter((p) => !existingSlugs.has(p.slug));
+        return [...prev, ...newPosts];
+      });
+      setHasMore(res.hasMore);
+      setNextCursor(res.nextCursor);
+    } catch (err) {
+      console.error("Failed to load more blogs:", err);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   useEffect(() => {
     if (route.name === "blog") {
@@ -177,7 +270,17 @@ function App() {
       <div className="pointer-events-none fixed inset-x-0 top-0 z-0 mx-auto h-[34rem] max-w-6xl bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.16),_transparent_50%),radial-gradient(circle_at_20%_15%,_rgba(251,113,133,0.16),_transparent_28%)] blur-3xl dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.14),_transparent_45%),radial-gradient(circle_at_20%_15%,_rgba(251,113,133,0.12),_transparent_24%)]" />
       <div className="relative z-10">
         <Header />
-        {route.name === "blog" ? <BlogArticlePage slug={route.slug} allPosts={blogs.length > 0 ? blogs : latestBlogs} /> : <HomePage posts={blogs} />}
+        {route.name === "blog" ? (
+          <BlogArticlePage slug={route.slug} allPosts={blogs.length > 0 ? blogs : latestBlogs} />
+        ) : (
+          <HomePage
+            posts={blogs}
+            isLoading={isLoadingBlogs}
+            hasMore={hasMore}
+            isLoadingMore={isLoadingMore}
+            onLoadMore={handleLoadMore}
+          />
+        )}
         <Footer />
       </div>
     </div>

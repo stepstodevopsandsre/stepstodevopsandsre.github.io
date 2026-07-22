@@ -41,12 +41,23 @@ export const getPageTitle = (page) => {
   return getPlainText(titleProperty?.title) || "Untitled Notion Article";
 };
 
+export const cleanNotionText = (value) => {
+  if (!value || typeof value !== "string") return value;
+  return value
+    .replaceAll("****", " ")
+    .replaceAll("**", " ")
+    .replaceAll(" —", "-")
+    .replaceAll(", and", " and")
+    .replaceAll(", or", " or");
+};
+
 export const parseNotionPageToPost = (page, slugProperty = "Slug") => {
   const properties = page.properties || {};
 
   // Extract Title
   const titleProperty = Object.values(properties).find((p) => p?.type === "title");
-  const title = getPlainText(titleProperty?.title) || "Untitled Notion Article";
+  const rawTitle = getPlainText(titleProperty?.title) || "Untitled Notion Article";
+  const title = cleanNotionText(rawTitle);
 
   // Extract Slug
   const slugProp = properties[slugProperty] || Object.values(properties).find((p) => p?.type === "rich_text");
@@ -70,6 +81,7 @@ export const parseNotionPageToPost = (page, slugProperty = "Slug") => {
       tag = tagProperty.multi_select[0].name;
     }
   }
+  tag = cleanNotionText(tag);
 
   // Extract Summary/Excerpt
   const summaryProperty = properties["Summary"] || properties["Excerpt"] || properties["Description"] || Object.values(properties).find((p) => p?.type === "rich_text" && p !== slugProp);
@@ -80,16 +92,20 @@ export const parseNotionPageToPost = (page, slugProperty = "Slug") => {
   if (!summary) {
     summary = "A Notion-backed engineering writeup.";
   }
+  summary = cleanNotionText(summary);
 
   // Read Time
   const readTimeProperty = properties["Read Time"] || properties["Reading Time"];
-  let readTime = "5 min read";
+  let readTime = "";
   if (readTimeProperty) {
-    if (readTimeProperty.type === "number") {
+    if (readTimeProperty.type === "number" && readTimeProperty.number) {
       readTime = `${readTimeProperty.number} min read`;
     } else if (readTimeProperty.type === "rich_text") {
       readTime = getPlainText(readTimeProperty.rich_text);
     }
+  }
+  if (!readTime) {
+    readTime = "5 min read";
   }
 
   // Extract Domain and Module (hierarchy breadcrumb fields)
@@ -100,6 +116,7 @@ export const parseNotionPageToPost = (page, slugProperty = "Slug") => {
   } else if (domainProp?.type === "text") {
     domain = domainProp.text?.content ?? "";
   }
+  domain = cleanNotionText(domain);
 
   const moduleProp = properties["Module"];
   let module = "";
@@ -108,6 +125,7 @@ export const parseNotionPageToPost = (page, slugProperty = "Slug") => {
   } else if (moduleProp?.type === "text") {
     module = moduleProp.text?.content ?? "";
   }
+  module = cleanNotionText(module);
 
   return {
     slug,
