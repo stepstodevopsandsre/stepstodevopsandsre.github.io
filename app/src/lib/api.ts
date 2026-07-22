@@ -1,3 +1,4 @@
+import { latestBlogs } from "@/data/siteContent";
 import type { BlogArticle, BlogPost } from "@/types";
 
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
@@ -118,7 +119,11 @@ const getStoredBlogsCache = (): BlogsCacheEntry | null => {
   try {
     const raw = localStorage.getItem(BLOGS_CACHE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as BlogsCacheEntry;
+    const parsed = JSON.parse(raw) as BlogsCacheEntry;
+    if (!parsed || !parsed.data || !Array.isArray(parsed.data.posts) || parsed.data.posts.length === 0) {
+      return null;
+    }
+    return parsed;
   } catch {
     return null;
   }
@@ -126,6 +131,9 @@ const getStoredBlogsCache = (): BlogsCacheEntry | null => {
 
 const setStoredBlogsCache = (data: FetchBlogsResult) => {
   try {
+    if (!data || !Array.isArray(data.posts) || data.posts.length === 0) {
+      return;
+    }
     const entry: BlogsCacheEntry = { timestamp: Date.now(), data };
     localStorage.setItem(BLOGS_CACHE_KEY, JSON.stringify(entry));
   } catch {
@@ -148,13 +156,15 @@ export const fetchPublishedBlogs = async (
     const cached = getStoredBlogsCache();
     const isFresh = cached && Date.now() - cached.timestamp < CACHE_TTL_MS;
 
-    if (cached) {
-      // If we have cached data, trigger a background update if stale or for revalidation
+    if (cached && cached.data.posts.length > 0) {
+      // Trigger a background update if stale or for revalidation
       if (onBackgroundUpdate) {
         fetchPublishedBlogsFromNetwork(undefined, pageSize)
           .then((fresh) => {
-            setStoredBlogsCache(fresh);
-            onBackgroundUpdate(fresh);
+            if (fresh.posts.length > 0) {
+              setStoredBlogsCache(fresh);
+              onBackgroundUpdate(fresh);
+            }
           })
           .catch(() => {
             /* Keep existing cached data on background failure */
@@ -166,27 +176,44 @@ export const fetchPublishedBlogs = async (
     }
   }
 
-  const result = await fetchPublishedBlogsFromNetwork(cursor, pageSize);
+  try {
+    const result = await fetchPublishedBlogsFromNetwork(cursor, pageSize);
 
-  if (!cursor) {
-    setStoredBlogsCache(result);
-  } else {
-    // Append newly fetched page to existing cached list if present
-    const existingCache = getStoredBlogsCache();
-    if (existingCache) {
-      const existingSlugs = new Set(existingCache.data.posts.map((p) => p.slug));
-      const newPosts = result.posts.filter((p) => !existingSlugs.has(p.slug));
-      const updatedPosts = [...existingCache.data.posts, ...newPosts];
-      const updatedData: FetchBlogsResult = {
-        posts: updatedPosts,
-        hasMore: result.hasMore,
-        nextCursor: result.nextCursor
-      };
-      setStoredBlogsCache(updatedData);
+    if (!cursor) {
+      if (result.posts.length > 0) {
+        setStoredBlogsCache(result);
+      }
+    } else {
+      // Append newly fetched page to existing cached list if present
+      const existingCache = getStoredBlogsCache();
+      if (existingCache) {
+        const existingSlugs = new Set(existingCache.data.posts.map((p) => p.slug));
+        const newPosts = result.posts.filter((p) => !existingSlugs.has(p.slug));
+        const updatedPosts = [...existingCache.data.posts, ...newPosts];
+        const updatedData: FetchBlogsResult = {
+          posts: updatedPosts,
+          hasMore: result.hasMore,
+          nextCursor: result.nextCursor
+        };
+        setStoredBlogsCache(updatedData);
+      }
     }
-  }
 
-  return result;
+    return result;
+  } catch (err) {
+    if (!cursor) {
+      const cached = getStoredBlogsCache();
+      if (cached && cached.data.posts.length > 0) {
+        return cached.data;
+      }
+      return {
+        posts: latestBlogs.map(cleanBlogPost),
+        hasMore: false,
+        nextCursor: null
+      };
+    }
+    throw err;
+  }
 };
 
 const fetchPublishedBlogsFromNetwork = async (
@@ -210,7 +237,11 @@ const fetchPublishedBlogsFromNetwork = async (
   };
 
   const rawPosts = payload.posts ?? [];
-  const posts = rawPosts.map(cleanBlogPost);
+  let posts = rawPosts.map(cleanBlogPost);
+
+  if (!cursor && posts.length === 0) {
+    posts = latestBlogs.map(cleanBlogPost);
+  }
 
   return {
     posts,

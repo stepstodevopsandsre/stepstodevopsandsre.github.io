@@ -15,7 +15,7 @@ import {
   site
 } from "@/data/siteContent";
 import { getBlogHref, getRouteFromHash, type AppRoute } from "@/lib/routes";
-import { fetchPublishedBlogs, getCachedBlogs } from "@/lib/api";
+import { fetchPublishedBlogs, getCachedBlogs, cleanBlogPost } from "@/lib/api";
 import type { BlogPost } from "@/types";
 
 const cardClassName =
@@ -201,11 +201,13 @@ function App() {
 
     // Check cached data synchronously for instant initial load
     const cached = getCachedBlogs();
-    if (cached && cached.posts.length > 0) {
+    if (cached && cached.posts && cached.posts.length > 0) {
       setBlogs(cached.posts);
       setHasMore(cached.hasMore);
       setNextCursor(cached.nextCursor);
       setIsLoadingBlogs(false);
+    } else {
+      setIsLoadingBlogs(true);
     }
 
     // Fetch initial page from network (with stale-while-revalidate background callback)
@@ -214,17 +216,25 @@ function App() {
         setBlogs(freshData.posts);
         setHasMore(freshData.hasMore);
         setNextCursor(freshData.nextCursor);
+        setIsLoadingBlogs(false);
       }
     })
       .then((data) => {
-        if (mounted && data.posts.length > 0) {
-          setBlogs(data.posts);
-          setHasMore(data.hasMore);
-          setNextCursor(data.nextCursor);
+        if (mounted) {
+          if (data && data.posts.length > 0) {
+            setBlogs(data.posts);
+            setHasMore(data.hasMore);
+            setNextCursor(data.nextCursor);
+          } else if (blogs.length === 0) {
+            setBlogs(latestBlogs.map(cleanBlogPost));
+          }
         }
       })
       .catch((err) => {
         console.error("Failed to fetch published blogs dynamically:", err);
+        if (mounted && blogs.length === 0) {
+          setBlogs(latestBlogs.map(cleanBlogPost));
+        }
       })
       .finally(() => {
         if (mounted) {
