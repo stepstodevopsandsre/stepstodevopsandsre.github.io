@@ -39,6 +39,20 @@ export type InterviewTopic = {
   href: string;
 };
 
+export type InterviewQuestion = {
+  slug: string;
+  notionPageId?: string;
+  question: string;
+  title: string;
+  summary: string;
+  domain: string;
+  keywords: string[];
+  companies: string[];
+  href: string;
+  publishedDate?: string;
+  lastEditedTime?: string;
+};
+
 export type ResourceItem = {
   title: string;
   description: string;
@@ -74,4 +88,12 @@ export type BlogArticle = {
   markdown: string;
   readingTimeMinutes: number;
   lastEditedTime?: string;
+};
+
+export type InterviewQuestionArticle = BlogArticle & {
+  question: string;
+  domain: string;
+  keywords: string[];
+  companies: string[];
+  publishedDate?: string;
 };

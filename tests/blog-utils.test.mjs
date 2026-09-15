@@ -10,6 +10,7 @@ import {
   parsePageMap,
   sanitizeArticleHtml,
   parseNotionPageToPost,
+  parseNotionPageToInterviewQuestion,
   cleanNotionText,
   getDeterministicReadingTime
 } from "../netlify/functions/_shared/blog-utils.js";
@@ -142,5 +143,52 @@ test("parseNotionPageToPost parses Notion page properties correctly", () => {
   assert.equal(parsed.tag, "Observability");
   assert.equal(parsed.readTime, "12 min read");
   assert.equal(parsed.href, "#/blog/grafana-observability-p95-p99-latency");
+});
+
+test("parseNotionPageToInterviewQuestion parses the interview question schema", () => {
+  const mockPage = {
+    id: "4a15aace-fb86-8180-b37a-e46f5847cad7",
+    last_edited_time: "2026-09-15T09:14:00.000Z",
+    properties: {
+      Question: {
+        type: "title",
+        title: [{ plain_text: "What is a page fault?" }]
+      },
+      Domain: {
+        type: "select",
+        select: { name: "Linux" }
+      },
+      Slug: {
+        type: "rich_text",
+        rich_text: [{ plain_text: "what-is-page-fault" }]
+      },
+      Keywords: {
+        type: "multi_select",
+        multi_select: [{ name: "Linux" }, { name: "Memory Management" }, { name: "Page Fault" }]
+      },
+      Company: {
+        type: "multi_select",
+        multi_select: [{ name: "Amazon" }, { name: "Google" }]
+      },
+      Status: {
+        type: "status",
+        status: { name: "Done" }
+      },
+      "Published Date": {
+        type: "date",
+        date: { start: "2026-09-15" }
+      }
+    }
+  };
+
+  const parsed = parseNotionPageToInterviewQuestion(mockPage);
+
+  assert.equal(parsed.slug, "what-is-page-fault");
+  assert.equal(parsed.question, "What is a page fault?");
+  assert.equal(parsed.domain, "Linux");
+  assert.deepEqual(parsed.keywords, ["Linux", "Memory Management", "Page Fault"]);
+  assert.deepEqual(parsed.companies, ["Amazon", "Google"]);
+  assert.equal(parsed.publishedDate, "2026-09-15");
+  assert.equal(parsed.href, "#/interview-questions/what-is-page-fault");
 });
 

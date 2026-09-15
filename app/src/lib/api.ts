@@ -1,5 +1,5 @@
-import { latestBlogs } from "@/data/siteContent";
-import type { BlogArticle, BlogPost } from "@/types";
+import { latestBlogs, latestInterviewQuestions } from "@/data/siteContent";
+import type { BlogArticle, BlogPost, InterviewQuestion, InterviewQuestionArticle } from "@/types";
 
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 const DEFAULT_PRODUCTION_API_BASE_URL = "https://stepstodevopsandsre.netlify.app";
@@ -7,6 +7,8 @@ const DEFAULT_PRODUCTION_API_BASE_URL = "https://stepstodevopsandsre.netlify.app
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour TTL
 const BLOGS_CACHE_KEY = "notion_blogs_cache_v2";
 const ARTICLE_CACHE_PREFIX = "notion_article_cache_v2_";
+const INTERVIEW_QUESTIONS_CACHE_KEY = "notion_interview_questions_cache_v1";
+const INTERVIEW_QUESTION_CACHE_PREFIX = "notion_interview_question_cache_v1_";
 
 const getApiBaseUrl = () => {
   const configured = import.meta.env.VITE_BLOG_API_BASE_URL;
@@ -42,6 +44,18 @@ export const getBlogsEndpoint = (cursor?: string, pageSize = 10) => {
   }
   return getEndpoint(`/.netlify/functions/blogs?${params.toString()}`);
 };
+
+export const getInterviewQuestionsEndpoint = (cursor?: string, pageSize = 10) => {
+  const params = new URLSearchParams();
+  params.set("pageSize", String(pageSize));
+  if (cursor) {
+    params.set("cursor", cursor);
+  }
+  return getEndpoint(`/.netlify/functions/interview-questions?${params.toString()}`);
+};
+
+export const getInterviewQuestionEndpoint = (slug: string) =>
+  getEndpoint(`/.netlify/functions/interview-question?slug=${encodeURIComponent(slug)}`);
 
 /**
  * Replaces Notion syntax artifacts in text:
@@ -99,6 +113,36 @@ export const cleanBlogArticle = (article: BlogArticle): BlogArticle => ({
   markdown: cleanNotionText(article.markdown)
 });
 
+const cleanTextList = (items: string[] | undefined): string[] =>
+  (items ?? []).map((item) => cleanNotionText(item)).filter(Boolean);
+
+export const cleanInterviewQuestion = (question: InterviewQuestion): InterviewQuestion => {
+  const cleanedQuestion = cleanNotionText(question.question || question.title);
+  return {
+    ...question,
+    question: cleanedQuestion,
+    title: cleanNotionText(question.title || cleanedQuestion),
+    summary: cleanNotionText(question.summary),
+    domain: cleanNotionText(question.domain),
+    keywords: cleanTextList(question.keywords),
+    companies: cleanTextList(question.companies)
+  };
+};
+
+export const cleanInterviewQuestionArticle = (
+  article: InterviewQuestionArticle
+): InterviewQuestionArticle => ({
+  ...article,
+  title: cleanNotionText(article.title),
+  question: cleanNotionText(article.question),
+  excerpt: cleanNotionText(article.excerpt),
+  html: cleanNotionText(article.html),
+  markdown: cleanNotionText(article.markdown),
+  domain: cleanNotionText(article.domain),
+  keywords: cleanTextList(article.keywords),
+  companies: cleanTextList(article.companies)
+});
+
 export interface FetchBlogsResult {
   posts: BlogPost[];
   hasMore: boolean;
@@ -113,6 +157,22 @@ interface BlogsCacheEntry {
 interface ArticleCacheEntry {
   timestamp: number;
   article: BlogArticle;
+}
+
+interface FetchInterviewQuestionsResult {
+  questions: InterviewQuestion[];
+  hasMore: boolean;
+  nextCursor: string | null;
+}
+
+interface InterviewQuestionsCacheEntry {
+  timestamp: number;
+  data: FetchInterviewQuestionsResult;
+}
+
+interface InterviewQuestionArticleCacheEntry {
+  timestamp: number;
+  article: InterviewQuestionArticle;
 }
 
 const getStoredBlogsCache = (): BlogsCacheEntry | null => {
@@ -143,6 +203,37 @@ const setStoredBlogsCache = (data: FetchBlogsResult) => {
 
 export const getCachedBlogs = (): FetchBlogsResult | null => {
   const cached = getStoredBlogsCache();
+  return cached ? cached.data : null;
+};
+
+const getStoredInterviewQuestionsCache = (): InterviewQuestionsCacheEntry | null => {
+  try {
+    const raw = localStorage.getItem(INTERVIEW_QUESTIONS_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as InterviewQuestionsCacheEntry;
+    if (!parsed || !parsed.data || !Array.isArray(parsed.data.questions) || parsed.data.questions.length === 0) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+};
+
+const setStoredInterviewQuestionsCache = (data: FetchInterviewQuestionsResult) => {
+  try {
+    if (!data || !Array.isArray(data.questions) || data.questions.length === 0) {
+      return;
+    }
+    const entry: InterviewQuestionsCacheEntry = { timestamp: Date.now(), data };
+    localStorage.setItem(INTERVIEW_QUESTIONS_CACHE_KEY, JSON.stringify(entry));
+  } catch {
+    // Ignore storage quota errors
+  }
+};
+
+export const getCachedInterviewQuestions = (): FetchInterviewQuestionsResult | null => {
+  const cached = getStoredInterviewQuestionsCache();
   return cached ? cached.data : null;
 };
 
@@ -314,6 +405,156 @@ export const fetchBlogArticle = async (slug: string): Promise<BlogArticle> => {
         setStoredBlogsCache({ ...blogsCache.data, posts: updatedPosts });
       }
     }
+  }
+
+  return article;
+};
+
+export const fetchPublishedInterviewQuestions = async (
+  cursor?: string,
+  pageSize = 10,
+  onBackgroundUpdate?: (data: FetchInterviewQuestionsResult) => void
+): Promise<FetchInterviewQuestionsResult> => {
+  if (!cursor) {
+    const cached = getStoredInterviewQuestionsCache();
+    const isFresh = cached && Date.now() - cached.timestamp < CACHE_TTL_MS;
+
+    if (cached && cached.data.questions.length > 0) {
+      if (onBackgroundUpdate) {
+        fetchPublishedInterviewQuestionsFromNetwork(undefined, pageSize)
+          .then((fresh) => {
+            if (fresh.questions.length > 0) {
+              setStoredInterviewQuestionsCache(fresh);
+              onBackgroundUpdate(fresh);
+            }
+          })
+          .catch(() => {
+            /* Keep existing cached data on background failure */
+          });
+      }
+      if (isFresh || !onBackgroundUpdate) {
+        return cached.data;
+      }
+    }
+  }
+
+  try {
+    const result = await fetchPublishedInterviewQuestionsFromNetwork(cursor, pageSize);
+
+    if (!cursor) {
+      if (result.questions.length > 0) {
+        setStoredInterviewQuestionsCache(result);
+      }
+    } else {
+      const existingCache = getStoredInterviewQuestionsCache();
+      if (existingCache) {
+        const existingSlugs = new Set(existingCache.data.questions.map((q) => q.slug));
+        const newQuestions = result.questions.filter((q) => !existingSlugs.has(q.slug));
+        setStoredInterviewQuestionsCache({
+          questions: [...existingCache.data.questions, ...newQuestions],
+          hasMore: result.hasMore,
+          nextCursor: result.nextCursor
+        });
+      }
+    }
+
+    return result;
+  } catch (err) {
+    if (!cursor) {
+      const cached = getStoredInterviewQuestionsCache();
+      if (cached && cached.data.questions.length > 0) {
+        return cached.data;
+      }
+      return {
+        questions: latestInterviewQuestions.map(cleanInterviewQuestion),
+        hasMore: false,
+        nextCursor: null
+      };
+    }
+    throw err;
+  }
+};
+
+const fetchPublishedInterviewQuestionsFromNetwork = async (
+  cursor?: string,
+  pageSize = 10
+): Promise<FetchInterviewQuestionsResult> => {
+  const response = await fetch(getInterviewQuestionsEndpoint(cursor, pageSize), {
+    headers: {
+      Accept: "application/json"
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Unable to load interview questions (${response.status}).`);
+  }
+
+  const payload = (await response.json()) as {
+    questions?: InterviewQuestion[];
+    hasMore?: boolean;
+    nextCursor?: string | null;
+  };
+
+  const rawQuestions = payload.questions ?? [];
+  let questions = rawQuestions.map(cleanInterviewQuestion);
+
+  if (!cursor && questions.length === 0) {
+    questions = latestInterviewQuestions.map(cleanInterviewQuestion);
+  }
+
+  return {
+    questions,
+    hasMore: payload.hasMore ?? false,
+    nextCursor: payload.nextCursor ?? null
+  };
+};
+
+export const fetchInterviewQuestionArticle = async (
+  slug: string
+): Promise<InterviewQuestionArticle> => {
+  const cacheKey = `${INTERVIEW_QUESTION_CACHE_PREFIX}${slug}`;
+
+  try {
+    const cachedRaw = localStorage.getItem(cacheKey);
+    if (cachedRaw) {
+      const cached = JSON.parse(cachedRaw) as InterviewQuestionArticleCacheEntry;
+      if (Date.now() - cached.timestamp < CACHE_TTL_MS) {
+        return cached.article;
+      }
+    }
+  } catch {
+    // Ignore cache parse errors
+  }
+
+  const response = await fetch(getInterviewQuestionEndpoint(slug), {
+    headers: {
+      Accept: "application/json"
+    }
+  });
+
+  if (!response.ok) {
+    let message = `Unable to load interview question (${response.status}).`;
+
+    try {
+      const payload = await response.json();
+      if (payload?.error) {
+        message = payload.error;
+      }
+    } catch {
+      // Keep status-based message when error payload is not JSON
+    }
+
+    throw new Error(message);
+  }
+
+  const rawArticle = (await response.json()) as InterviewQuestionArticle;
+  const article = cleanInterviewQuestionArticle(rawArticle);
+
+  try {
+    const entry: InterviewQuestionArticleCacheEntry = { timestamp: Date.now(), article };
+    localStorage.setItem(cacheKey, JSON.stringify(entry));
+  } catch {
+    // Ignore quota errors
   }
 
   return article;

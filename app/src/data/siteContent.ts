@@ -13,6 +13,7 @@ import {
 import type {
   BlogPost,
   Category,
+  InterviewQuestion,
   InterviewTopic,
   NavItem,
   ResourceItem,
@@ -132,6 +133,20 @@ export const interviewQuestions: InterviewTopic[] = [
       "OCI, AWS, Terraform, observability, RCA and automation scenarios grounded in production operations.",
     level: "Advanced",
     href: "#"
+  }
+];
+
+export const latestInterviewQuestions: InterviewQuestion[] = [
+  {
+    slug: "what-is-page-fault",
+    notionPageId: "local-fallback-page-fault",
+    question: "What is a page fault?",
+    title: "What is a page fault?",
+    summary: "Interview prep for Linux, memory management, page fault.",
+    domain: "Linux",
+    keywords: ["Linux", "Memory Management", "Page Fault"],
+    companies: [],
+    href: "#/interview-questions/what-is-page-fault"
   }
 ];
 

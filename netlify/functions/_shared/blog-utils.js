@@ -36,6 +36,52 @@ export const parsePageMap = (rawValue) => {
 
 const getPlainText = (value) => (Array.isArray(value) ? value.map((item) => item?.plain_text || "").join("") : "");
 
+const getPropertyText = (property) => {
+  if (!property) return "";
+
+  if (property.type === "title") {
+    return getPlainText(property.title);
+  }
+
+  if (property.type === "rich_text") {
+    return getPlainText(property.rich_text);
+  }
+
+  if (property.type === "select") {
+    return property.select?.name || "";
+  }
+
+  if (property.type === "status") {
+    return property.status?.name || "";
+  }
+
+  if (property.type === "url") {
+    return property.url || "";
+  }
+
+  if (property.type === "date") {
+    return property.date?.start || "";
+  }
+
+  return "";
+};
+
+const getPropertyList = (property) => {
+  if (!property) return [];
+
+  if (property.type === "multi_select") {
+    return property.multi_select.map((item) => item.name).filter(Boolean);
+  }
+
+  const value = getPropertyText(property);
+  if (!value) return [];
+
+  return value
+    .split(",")
+    .map((item) => cleanNotionText(item.trim()))
+    .filter(Boolean);
+};
+
 export const getPageTitle = (page) => {
   const titleProperty = Object.values(page?.properties || {}).find((property) => property?.type === "title");
   return getPlainText(titleProperty?.title) || "Untitled Notion Article";
@@ -151,6 +197,38 @@ export const parseNotionPageToPost = (page, slugProperty = "Slug") => {
     domain: domain || undefined,
     module: module || undefined,
     href: `#/blog/${slug}`,
+    lastEditedTime: page.last_edited_time
+  };
+};
+
+export const parseNotionPageToInterviewQuestion = (page, slugProperty = "Slug") => {
+  const properties = page.properties || {};
+
+  const questionProperty = properties.Question || Object.values(properties).find((p) => p?.type === "title");
+  const question = cleanNotionText(getPropertyText(questionProperty) || "Untitled Interview Question");
+
+  const slugProp = properties[slugProperty] || properties.Slug;
+  const slug = cleanNotionText(getPropertyText(slugProp)) || page.id;
+
+  const domain = cleanNotionText(getPropertyText(properties.Domain)) || "General";
+  const keywords = getPropertyList(properties.Keywords);
+  const companies = getPropertyList(properties.Company || properties.Companies);
+  const publishedDate = getPropertyText(properties["Published Date"]);
+
+  const keywordSummary = keywords.length > 0 ? keywords.join(", ") : domain;
+  const companySummary = companies.length > 0 ? ` Company focus: ${companies.join(", ")}.` : "";
+
+  return {
+    slug,
+    notionPageId: page.id,
+    question,
+    title: question,
+    summary: `Interview prep for ${keywordSummary}.${companySummary}`,
+    domain,
+    keywords,
+    companies,
+    publishedDate: publishedDate || undefined,
+    href: `#/interview-questions/${slug}`,
     lastEditedTime: page.last_edited_time
   };
 };
