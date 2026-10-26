@@ -29,7 +29,7 @@ import {
 import type { BlogPost, InterviewQuestion } from "@/types";
 
 const cardClassName =
-  "flex flex-col rounded-[1.5rem] border border-border/70 bg-surface/75 p-5 shadow-panel backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-accent/35 hover:bg-elevated";
+  "flex h-[18rem] flex-col overflow-hidden rounded-[1.5rem] border border-border/70 bg-surface/75 p-5 shadow-panel backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-accent/35 hover:bg-elevated";
 
 interface HomePageProps {
   posts: BlogPost[];
@@ -143,7 +143,7 @@ const HomePage = ({
         ) : (
           filteredPosts.map((post, index) => (
             <MotionReveal key={post.slug} delay={0.04 * index}>
-              <article className="flex flex-col rounded-[1.5rem] border border-border/70 bg-surface/75 p-5 shadow-panel backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-accent/35 hover:bg-elevated">
+              <article className="flex h-[18rem] flex-col overflow-hidden rounded-[1.5rem] border border-border/70 bg-surface/75 p-5 shadow-panel backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-accent/35 hover:bg-elevated">
                 <div className="flex items-center justify-between gap-4">
                   <span className="rounded-full bg-accentSoft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
                     {post.tag}

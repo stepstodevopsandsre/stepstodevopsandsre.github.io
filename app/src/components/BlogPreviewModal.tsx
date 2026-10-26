@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Eye, LoaderCircle, X } from "lucide-react";
-import { fetchBlogArticle } from "@/lib/api";
-import type { BlogArticle, BlogPost } from "@/types";
+import { Eye, X } from "lucide-react";
+import type { BlogPost } from "@/types";
 
 type BlogPreviewModalProps = {
   post: BlogPost | null;
@@ -10,29 +9,12 @@ type BlogPreviewModalProps = {
 };
 
 export const BlogPreviewModal = ({ post, onClose }: BlogPreviewModalProps) => {
-  const [article, setArticle] = useState<BlogArticle | null>(null);
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
-
   useEffect(() => {
     if (!post) return;
 
-    let active = true;
-    setArticle(null);
-    setStatus("loading");
     document.body.style.overflow = "hidden";
 
-    fetchBlogArticle(post.slug)
-      .then((result) => {
-        if (!active) return;
-        setArticle(result);
-        setStatus("success");
-      })
-      .catch(() => {
-        if (active) setStatus("error");
-      });
-
     return () => {
-      active = false;
       document.body.style.overflow = "";
     };
   }, [post]);
@@ -101,25 +83,7 @@ export const BlogPreviewModal = ({ post, onClose }: BlogPreviewModalProps) => {
                 <Eye size={22} />
               </motion.div>
 
-              {status === "loading" && (
-                <div className="flex min-h-56 items-center justify-center gap-3 text-sm text-muted">
-                  <LoaderCircle className="animate-spin text-accent" size={20} />
-                  Loading article preview…
-                </div>
-              )}
-
-              {status === "error" && (
-                <div className="rounded-xl border border-border/70 bg-surface/70 p-6 text-sm leading-7 text-muted">
-                  The article preview is temporarily unavailable. Use the full article link below to try again.
-                </div>
-              )}
-
-              {status === "success" && article && (
-                <article
-                  className="prose prose-slate max-w-none pr-2 prose-headings:font-display prose-headings:tracking-tight prose-a:text-accent dark:prose-invert"
-                  dangerouslySetInnerHTML={{ __html: article.html }}
-                />
-              )}
+              <p className="max-w-3xl text-base leading-8 text-muted sm:text-lg">{post.summary}</p>
             </div>
 
             <footer className="flex justify-end border-t border-border/70 px-5 py-4 sm:px-7">
