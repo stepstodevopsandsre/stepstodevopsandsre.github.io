@@ -69,6 +69,8 @@ NOTION_INTERVIEW_STATUS_PROPERTY=Status
 NOTION_INTERVIEW_STATUS_PROPERTY_TYPE=status
 NOTION_INTERVIEW_PUBLISHED_VALUE=Done
 NOTION_INTERVIEW_SORT_PROPERTY=Published Date
+NOTION_INTERVIEW_DIFFICULTY_PROPERTY=Difficulty
+NOTION_INTERVIEW_DIFFICULTY_PROPERTY_TYPE=select
 ALLOWED_ORIGIN=https://stepstodevopsandsre.github.io
 ```
 
@@ -111,7 +113,8 @@ Use a second Notion database for interview questions. The flow mirrors the blog 
 Required interview database properties:
 
 - `Question` as the database title property
-- `Domain` as a `select` property for the tool/domain filter, for example `Docker`, `Linux`, `Kubernetes`, `Jenkins`
+- `Domain` as a `select` property for the technical area, for example `Docker`, `Linux`, `Kubernetes`, `Jenkins`
+- `Difficulty` as a `select` property with exactly `Beginner`, `Intermediate`, and `Advanced`
 - `Notion Page URL` as a `url` property pointing to the canonical answer page, or leave it empty to render the database row page body
 - `Slug` as a `rich_text` or `title` property containing the URL slug
 - `Keywords` as a `multi_select` property, or comma-separated `rich_text`
@@ -127,7 +130,7 @@ Request flow:
 1. A visitor opens `#interview-questions`.
 2. The frontend calls `/.netlify/functions/interview-questions?pageSize=10`.
 3. The Netlify function queries the interview database for `Status = Done`, sorted by `Published Date`.
-4. The frontend renders filterable question cards with tool/domain and company filters.
+4. The frontend renders question cards using the selected difficulty filter.
 5. A visitor opens a question route like `#/interview-questions/what-is-page-fault`.
 6. The frontend calls `/.netlify/functions/interview-question?slug=what-is-page-fault`.
 7. The function finds the published row by `Slug`, renders `Notion Page URL` content if present, otherwise renders the row page body.
@@ -146,7 +149,8 @@ No Notion secret is exposed in the browser or in the GitHub Pages deployment.
 
 1. Interview answers stay canonical in Notion.
 2. The GitHub Pages frontend calls `/.netlify/functions/interview-questions` for the paginated index.
-3. The frontend derives `Tool / Domain` and `Company` filters from returned Notion rows.
+3. The frontend sends the selected difficulty to Netlify, so Notion filters before pagination and returns at most 10 rows per request.
+4. Selecting a new difficulty starts a fresh cursor chain. Loading more continues that same filtered chain.
 4. The detail route calls `/.netlify/functions/interview-question?slug=...`.
 5. The function enforces `Status = Done`, converts the Notion answer page to Markdown and sanitized HTML, and returns it to the browser.
 

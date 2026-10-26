@@ -86,6 +86,7 @@ export const InterviewQuestionPage = ({ slug, allQuestions }: InterviewQuestionP
 
   const questionTitle = state.status === "success" ? state.article.question : fallback?.question ?? "Loading question";
   const domain = state.status === "success" ? state.article.domain : fallback?.domain;
+  const difficulty = state.status === "success" ? state.article.difficulty : fallback?.difficulty;
   const keywords = state.status === "success" ? state.article.keywords : fallback?.keywords ?? [];
   const companies = state.status === "success" ? state.article.companies : fallback?.companies ?? [];
 
@@ -109,6 +110,11 @@ export const InterviewQuestionPage = ({ slug, allQuestions }: InterviewQuestionP
           {domain && (
             <span className="rounded-full border border-accent/20 bg-accentSoft px-3 py-1 font-semibold uppercase tracking-[0.18em] text-accent">
               {domain}
+            </span>
+          )}
+          {difficulty && (
+            <span className="rounded-full border border-border/70 px-3 py-1 font-semibold text-muted">
+              {difficulty}
             </span>
           )}
           {state.status === "success" && (

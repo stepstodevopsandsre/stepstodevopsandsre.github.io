@@ -2,6 +2,7 @@ import { Client } from "@notionhq/client";
 import {
   DEFAULT_ORIGIN,
   createCorsHeaders,
+  getDifficultyFilter,
   getPublishedFilter,
   isAllowedOrigin,
   parseNotionPageToInterviewQuestion
@@ -40,11 +41,14 @@ export const handler = async (event) => {
   const statusPropertyType = process.env.NOTION_INTERVIEW_STATUS_PROPERTY_TYPE || "status";
   const publishedValue = process.env.NOTION_INTERVIEW_PUBLISHED_VALUE || "Done";
   const sortProperty = process.env.NOTION_INTERVIEW_SORT_PROPERTY || "Published Date";
+  const difficultyProperty = process.env.NOTION_INTERVIEW_DIFFICULTY_PROPERTY || "Difficulty";
+  const difficultyPropertyType = process.env.NOTION_INTERVIEW_DIFFICULTY_PROPERTY_TYPE || "select";
 
   const pageSizeParam = event.queryStringParameters?.pageSize;
   const cursorParam = event.queryStringParameters?.cursor;
   const pageSize = pageSizeParam ? Math.min(Math.max(parseInt(pageSizeParam, 10) || 10, 1), 100) : 10;
   const startCursor = cursorParam || undefined;
+  const difficultyParam = event.queryStringParameters?.difficulty;
 
   const cacheHeaders = {
     ...createCorsHeaders(requestOrigin || allowedOrigin),
@@ -75,9 +79,14 @@ export const handler = async (event) => {
 
   try {
     const notion = new Client({ auth: notionToken });
+    const filters = [getPublishedFilter(statusProperty, publishedValue, statusPropertyType)];
+    if (difficultyParam && difficultyParam !== "all") {
+      filters.push(getDifficultyFilter(difficultyProperty, difficultyParam, difficultyPropertyType));
+    }
+
     const response = await notion.databases.query({
       database_id: databaseId,
-      filter: getPublishedFilter(statusProperty, publishedValue, statusPropertyType),
+      filter: filters.length === 1 ? filters[0] : { and: filters },
       sorts: [
         {
           property: sortProperty,

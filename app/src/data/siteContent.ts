@@ -138,15 +138,59 @@ export const interviewQuestions: InterviewTopic[] = [
 
 export const latestInterviewQuestions: InterviewQuestion[] = [
   {
-    slug: "what-is-page-fault",
-    notionPageId: "local-fallback-page-fault",
-    question: "What is a page fault?",
-    title: "What is a page fault?",
-    summary: "Interview prep for Linux, memory management, page fault.",
-    domain: "Linux",
-    keywords: ["Linux", "Memory Management", "Page Fault"],
+    slug: "eks-complete-traffic-flow-example-com-to-container",
+    question: "Complete traffic flow from user hitting example.com till app container in EKS where app is deployed",
+    title: "Complete traffic flow from user hitting example.com till app container in EKS where app is deployed",
+    summary: "Interview prep for EKS, Kubernetes, AWS, Traffic Flow.",
+    domain: "EKS",
+    difficulty: "Intermediate",
+    keywords: ["EKS", "Kubernetes", "AWS", "Traffic Flow"],
     companies: [],
-    href: "#/interview-questions/what-is-page-fault"
+    href: "#/interview-questions/eks-complete-traffic-flow-example-com-to-container"
+  },
+  {
+    slug: "manage-secrets-and-configmaps-for-apps-in-eks",
+    question: "How do you manage secrets and config maps for apps deployed in EKS?",
+    title: "How do you manage secrets and config maps for apps deployed in EKS?",
+    summary: "Interview prep for EKS, Kubernetes, Secrets, ConfigMap, IAM.",
+    domain: "EKS",
+    difficulty: "Intermediate",
+    keywords: ["EKS", "Kubernetes", "Secrets", "ConfigMap"],
+    companies: [],
+    href: "#/interview-questions/manage-secrets-and-configmaps-for-apps-in-eks"
+  },
+  {
+    slug: "git-revert-vs-git-reset",
+    question: "Git revert vs Git reset",
+    title: "Git revert vs Git reset",
+    summary: "Interview prep for Git.",
+    domain: "Git",
+    difficulty: "Beginner",
+    keywords: ["Git"],
+    companies: [],
+    href: "#/interview-questions/git-revert-vs-git-reset"
+  },
+  {
+    slug: "manage-roles-in-ansible",
+    question: "How do you manage roles in Ansible?",
+    title: "How do you manage roles in Ansible?",
+    summary: "Interview prep for Ansible.",
+    domain: "Ansible",
+    difficulty: "Intermediate",
+    keywords: ["Ansible"],
+    companies: [],
+    href: "#/interview-questions/manage-roles-in-ansible"
+  },
+  {
+    slug: "terraform-lifecycle-block-and-why-it-is-needed",
+    question: "What is lifecycle block in Terraform and why is it needed?",
+    title: "What is lifecycle block in Terraform and why is it needed?",
+    summary: "Interview prep for Terraform, Lifecycle.",
+    domain: "Terraform",
+    difficulty: "Advanced",
+    keywords: ["Terraform", "Lifecycle"],
+    companies: [],
+    href: "#/interview-questions/terraform-lifecycle-block-and-why-it-is-needed"
   }
 ];
 

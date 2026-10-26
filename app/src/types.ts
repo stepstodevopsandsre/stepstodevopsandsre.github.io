@@ -46,6 +46,7 @@ export type InterviewQuestion = {
   title: string;
   summary: string;
   domain: string;
+  difficulty: string;
   keywords: string[];
   companies: string[];
   href: string;
@@ -93,6 +94,7 @@ export type BlogArticle = {
 export type InterviewQuestionArticle = BlogArticle & {
   question: string;
   domain: string;
+  difficulty: string;
   keywords: string[];
   companies: string[];
   publishedDate?: string;

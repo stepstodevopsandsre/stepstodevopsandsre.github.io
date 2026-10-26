@@ -45,11 +45,14 @@ export const getBlogsEndpoint = (cursor?: string, pageSize = 10) => {
   return getEndpoint(`/.netlify/functions/blogs?${params.toString()}`);
 };
 
-export const getInterviewQuestionsEndpoint = (cursor?: string, pageSize = 10) => {
+export const getInterviewQuestionsEndpoint = (cursor?: string, pageSize = 10, difficulty = "all") => {
   const params = new URLSearchParams();
   params.set("pageSize", String(pageSize));
   if (cursor) {
     params.set("cursor", cursor);
+  }
+  if (difficulty !== "all") {
+    params.set("difficulty", difficulty);
   }
   return getEndpoint(`/.netlify/functions/interview-questions?${params.toString()}`);
 };
@@ -124,6 +127,7 @@ export const cleanInterviewQuestion = (question: InterviewQuestion): InterviewQu
     title: cleanNotionText(question.title || cleanedQuestion),
     summary: cleanNotionText(question.summary),
     domain: cleanNotionText(question.domain),
+    difficulty: cleanNotionText(question.difficulty || "Beginner"),
     keywords: cleanTextList(question.keywords),
     companies: cleanTextList(question.companies)
   };
@@ -139,6 +143,7 @@ export const cleanInterviewQuestionArticle = (
   html: cleanNotionText(article.html),
   markdown: cleanNotionText(article.markdown),
   domain: cleanNotionText(article.domain),
+  difficulty: cleanNotionText(article.difficulty || "Beginner"),
   keywords: cleanTextList(article.keywords),
   companies: cleanTextList(article.companies)
 });
@@ -206,9 +211,9 @@ export const getCachedBlogs = (): FetchBlogsResult | null => {
   return cached ? cached.data : null;
 };
 
-const getStoredInterviewQuestionsCache = (): InterviewQuestionsCacheEntry | null => {
+const getStoredInterviewQuestionsCache = (difficulty = "all"): InterviewQuestionsCacheEntry | null => {
   try {
-    const raw = localStorage.getItem(INTERVIEW_QUESTIONS_CACHE_KEY);
+    const raw = localStorage.getItem(`${INTERVIEW_QUESTIONS_CACHE_KEY}_${difficulty}`);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as InterviewQuestionsCacheEntry;
     if (!parsed || !parsed.data || !Array.isArray(parsed.data.questions) || parsed.data.questions.length === 0) {
@@ -220,20 +225,20 @@ const getStoredInterviewQuestionsCache = (): InterviewQuestionsCacheEntry | null
   }
 };
 
-const setStoredInterviewQuestionsCache = (data: FetchInterviewQuestionsResult) => {
+const setStoredInterviewQuestionsCache = (data: FetchInterviewQuestionsResult, difficulty = "all") => {
   try {
     if (!data || !Array.isArray(data.questions) || data.questions.length === 0) {
       return;
     }
     const entry: InterviewQuestionsCacheEntry = { timestamp: Date.now(), data };
-    localStorage.setItem(INTERVIEW_QUESTIONS_CACHE_KEY, JSON.stringify(entry));
+    localStorage.setItem(`${INTERVIEW_QUESTIONS_CACHE_KEY}_${difficulty}`, JSON.stringify(entry));
   } catch {
     // Ignore storage quota errors
   }
 };
 
-export const getCachedInterviewQuestions = (): FetchInterviewQuestionsResult | null => {
-  const cached = getStoredInterviewQuestionsCache();
+export const getCachedInterviewQuestions = (difficulty = "all"): FetchInterviewQuestionsResult | null => {
+  const cached = getStoredInterviewQuestionsCache(difficulty);
   return cached ? cached.data : null;
 };
 
@@ -413,18 +418,19 @@ export const fetchBlogArticle = async (slug: string): Promise<BlogArticle> => {
 export const fetchPublishedInterviewQuestions = async (
   cursor?: string,
   pageSize = 10,
+  difficulty = "all",
   onBackgroundUpdate?: (data: FetchInterviewQuestionsResult) => void
 ): Promise<FetchInterviewQuestionsResult> => {
   if (!cursor) {
-    const cached = getStoredInterviewQuestionsCache();
+    const cached = getStoredInterviewQuestionsCache(difficulty);
     const isFresh = cached && Date.now() - cached.timestamp < CACHE_TTL_MS;
 
     if (cached && cached.data.questions.length > 0) {
       if (onBackgroundUpdate) {
-        fetchPublishedInterviewQuestionsFromNetwork(undefined, pageSize)
+        fetchPublishedInterviewQuestionsFromNetwork(undefined, pageSize, difficulty)
           .then((fresh) => {
             if (fresh.questions.length > 0) {
-              setStoredInterviewQuestionsCache(fresh);
+              setStoredInterviewQuestionsCache(fresh, difficulty);
               onBackgroundUpdate(fresh);
             }
           })
@@ -439,14 +445,14 @@ export const fetchPublishedInterviewQuestions = async (
   }
 
   try {
-    const result = await fetchPublishedInterviewQuestionsFromNetwork(cursor, pageSize);
+    const result = await fetchPublishedInterviewQuestionsFromNetwork(cursor, pageSize, difficulty);
 
     if (!cursor) {
       if (result.questions.length > 0) {
-        setStoredInterviewQuestionsCache(result);
+        setStoredInterviewQuestionsCache(result, difficulty);
       }
     } else {
-      const existingCache = getStoredInterviewQuestionsCache();
+      const existingCache = getStoredInterviewQuestionsCache(difficulty);
       if (existingCache) {
         const existingSlugs = new Set(existingCache.data.questions.map((q) => q.slug));
         const newQuestions = result.questions.filter((q) => !existingSlugs.has(q.slug));
@@ -454,19 +460,19 @@ export const fetchPublishedInterviewQuestions = async (
           questions: [...existingCache.data.questions, ...newQuestions],
           hasMore: result.hasMore,
           nextCursor: result.nextCursor
-        });
+        }, difficulty);
       }
     }
 
     return result;
   } catch (err) {
     if (!cursor) {
-      const cached = getStoredInterviewQuestionsCache();
+      const cached = getStoredInterviewQuestionsCache(difficulty);
       if (cached && cached.data.questions.length > 0) {
         return cached.data;
       }
       return {
-        questions: latestInterviewQuestions.map(cleanInterviewQuestion),
+        questions: difficulty === "all" ? latestInterviewQuestions.map(cleanInterviewQuestion) : [],
         hasMore: false,
         nextCursor: null
       };
@@ -477,9 +483,10 @@ export const fetchPublishedInterviewQuestions = async (
 
 const fetchPublishedInterviewQuestionsFromNetwork = async (
   cursor?: string,
-  pageSize = 10
+  pageSize = 10,
+  difficulty = "all"
 ): Promise<FetchInterviewQuestionsResult> => {
-  const response = await fetch(getInterviewQuestionsEndpoint(cursor, pageSize), {
+  const response = await fetch(getInterviewQuestionsEndpoint(cursor, pageSize, difficulty), {
     headers: {
       Accept: "application/json"
     }
@@ -498,7 +505,7 @@ const fetchPublishedInterviewQuestionsFromNetwork = async (
   const rawQuestions = payload.questions ?? [];
   let questions = rawQuestions.map(cleanInterviewQuestion);
 
-  if (!cursor && questions.length === 0) {
+  if (!cursor && questions.length === 0 && difficulty === "all") {
     questions = latestInterviewQuestions.map(cleanInterviewQuestion);
   }
 

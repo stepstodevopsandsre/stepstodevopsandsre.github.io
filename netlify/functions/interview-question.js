@@ -226,6 +226,7 @@ export const handler = async (event) => {
         title: parsedQuestion.question,
         question: parsedQuestion.question,
         domain: parsedQuestion.domain,
+        difficulty: parsedQuestion.difficulty,
         keywords: parsedQuestion.keywords,
         companies: parsedQuestion.companies,
         publishedDate: parsedQuestion.publishedDate,

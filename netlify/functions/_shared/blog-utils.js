@@ -211,6 +211,7 @@ export const parseNotionPageToInterviewQuestion = (page, slugProperty = "Slug") 
   const slug = cleanNotionText(getPropertyText(slugProp)) || page.id;
 
   const domain = cleanNotionText(getPropertyText(properties.Domain)) || "General";
+  const difficulty = cleanNotionText(getPropertyText(properties.Difficulty)) || "Beginner";
   const keywords = getPropertyList(properties.Keywords);
   const companies = getPropertyList(properties.Company || properties.Companies);
   const publishedDate = getPropertyText(properties["Published Date"]);
@@ -225,6 +226,7 @@ export const parseNotionPageToInterviewQuestion = (page, slugProperty = "Slug") 
     title: question,
     summary: `Interview prep for ${keywordSummary}.${companySummary}`,
     domain,
+    difficulty,
     keywords,
     companies,
     publishedDate: publishedDate || undefined,
@@ -267,6 +269,14 @@ export const getPublishedFilter = (propertyName, publishedValue, propertyType = 
       equals: publishedValue
     }
   };
+};
+
+export const getDifficultyFilter = (propertyName, difficulty, propertyType = "select") => {
+  if (propertyType === "status") {
+    return { property: propertyName, status: { equals: difficulty } };
+  }
+
+  return { property: propertyName, select: { equals: difficulty } };
 };
 
 export const stripMarkdown = (value) =>

@@ -5,6 +5,7 @@ import {
   createExcerpt,
   getPageTitle,
   getPublishedFilter,
+  getDifficultyFilter,
   getSlugFilter,
   isAllowedOrigin,
   parsePageMap,
@@ -98,6 +99,13 @@ test("getPublishedFilter can create a select filter", () => {
 
   assert.equal(filter.property, "Status");
   assert.equal(filter.select.equals, "Published");
+});
+
+test("getDifficultyFilter creates a select filter for server-side pagination", () => {
+  assert.deepEqual(getDifficultyFilter("Difficulty", "Intermediate"), {
+    property: "Difficulty",
+    select: { equals: "Intermediate" }
+  });
 });
 
 test("sanitizeArticleHtml does not strip image tags or their S3 URLs", () => {
