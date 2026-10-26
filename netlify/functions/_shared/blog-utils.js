@@ -13,6 +13,11 @@ export const createCorsHeaders = (origin) => ({
   Vary: "Origin"
 });
 
+export const logAndHideNotionError = (error, context, publicMessage) => {
+  console.error(`[${context}]`, error);
+  return publicMessage;
+};
+
 export const isAllowedOrigin = (origin, allowedOrigin) => {
   if (!origin) {
     return true;

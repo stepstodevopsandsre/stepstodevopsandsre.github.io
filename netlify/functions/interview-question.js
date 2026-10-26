@@ -9,6 +9,7 @@ import {
   getPublishedFilter,
   getSlugFilter,
   isAllowedOrigin,
+  logAndHideNotionError,
   parseNotionPageToInterviewQuestion,
   sanitizeArticleHtml
 } from "./_shared/blog-utils.js";
@@ -184,7 +185,7 @@ export const handler = async (event) => {
     return {
       statusCode: 500,
       headers: createCorsHeaders(requestOrigin || allowedOrigin),
-      body: JSON.stringify({ error: "NOTION_TOKEN is not configured in Netlify." })
+      body: JSON.stringify({ error: "This interview answer is temporarily unavailable. Please try again later." })
     };
   }
 
@@ -200,7 +201,7 @@ export const handler = async (event) => {
         statusCode: 404,
         headers: createCorsHeaders(requestOrigin || allowedOrigin),
         body: JSON.stringify({
-          error: `No published Notion interview question found for slug "${slug}".`
+          error: "This interview answer is not available yet. Please return to the interview questions list."
         })
       };
     }
@@ -243,7 +244,11 @@ export const handler = async (event) => {
       statusCode: 500,
       headers: createCorsHeaders(requestOrigin || allowedOrigin),
       body: JSON.stringify({
-        error: error instanceof Error ? error.message : "Unable to fetch interview question content from Notion."
+        error: logAndHideNotionError(
+          error,
+          "interview-question",
+          "This interview answer is temporarily unavailable. Please try again later."
+        )
       })
     };
   }

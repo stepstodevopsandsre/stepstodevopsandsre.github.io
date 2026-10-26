@@ -5,6 +5,7 @@ import {
   getDifficultyFilter,
   getPublishedFilter,
   isAllowedOrigin,
+  logAndHideNotionError,
   parseNotionPageToInterviewQuestion
 } from "./_shared/blog-utils.js";
 
@@ -60,7 +61,7 @@ export const handler = async (event) => {
     return {
       statusCode: 500,
       headers: createCorsHeaders(requestOrigin || allowedOrigin),
-      body: JSON.stringify({ error: "NOTION_TOKEN is not configured in Netlify." })
+      body: JSON.stringify({ error: "Interview questions are temporarily unavailable. Please try again later." })
     };
   }
 
@@ -115,7 +116,11 @@ export const handler = async (event) => {
       statusCode: 500,
       headers: createCorsHeaders(requestOrigin || allowedOrigin),
       body: JSON.stringify({
-        error: error instanceof Error ? error.message : "Unable to fetch interview questions from Notion."
+        error: logAndHideNotionError(
+          error,
+          "interview-questions",
+          "Interview questions are temporarily unavailable. Please try again later."
+        )
       })
     };
   }
