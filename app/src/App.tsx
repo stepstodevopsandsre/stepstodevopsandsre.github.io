@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { LoaderCircle } from "lucide-react";
+import { Eye, LoaderCircle } from "lucide-react";
 import { AboutSection } from "@/components/AboutSection";
 import { BlogArticlePage } from "@/components/BlogArticlePage";
+import { BlogPreviewModal } from "@/components/BlogPreviewModal";
 import { BlogFilters } from "@/components/BlogFilters";
 import { ContentGrid } from "@/components/ContentGrid";
 import { FeaturedCategories } from "@/components/FeaturedCategories";
@@ -28,7 +29,7 @@ import {
 import type { BlogPost, InterviewQuestion } from "@/types";
 
 const cardClassName =
-  "flex h-full flex-col rounded-[1.75rem] border border-border/70 bg-surface/75 p-6 shadow-panel backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-accent/35 hover:bg-elevated";
+  "flex flex-col rounded-[1.5rem] border border-border/70 bg-surface/75 p-5 shadow-panel backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-accent/35 hover:bg-elevated";
 
 interface HomePageProps {
   posts: BlogPost[];
@@ -65,6 +66,7 @@ const HomePage = ({
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [domainFilter, setDomainFilter] = useState("all");
   const [questionDifficultyFilter, setQuestionDifficultyFilter] = useState(questionDifficulty);
+  const [previewPost, setPreviewPost] = useState<BlogPost | null>(null);
 
   const categories = useMemo(
     () => [...new Set(displayPosts.map((post) => post.tag).filter(Boolean))].sort(),
@@ -140,19 +142,30 @@ const HomePage = ({
           </div>
         ) : (
           filteredPosts.map((post, index) => (
-            <MotionReveal key={post.slug} className="h-full" delay={0.04 * index}>
-              <article className="flex h-full flex-col rounded-[1.75rem] border border-border/70 bg-surface/75 p-6 shadow-panel backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-accent/35 hover:bg-elevated">
+            <MotionReveal key={post.slug} delay={0.04 * index}>
+              <article className="flex flex-col rounded-[1.5rem] border border-border/70 bg-surface/75 p-5 shadow-panel backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-accent/35 hover:bg-elevated">
                 <div className="flex items-center justify-between gap-4">
-                  <span className="rounded-full bg-accentSoft px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-accent">
+                  <span className="rounded-full bg-accentSoft px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-accent">
                     {post.tag}
                   </span>
-                  <span className="text-sm text-muted">{post.readTime}</span>
+                  <span className="text-xs text-muted">{post.readTime}</span>
                 </div>
-                <h3 className="mt-6 font-display text-2xl font-semibold text-text">{post.title}</h3>
-                <p className="mt-4 flex-1 text-sm leading-7 text-muted">{post.summary}</p>
-                <a href={getBlogHref(post.slug)} className="mt-6 inline-flex text-sm font-semibold text-accent">
-                  Read article
-                </a>
+                <h3 className="mt-5 line-clamp-4 font-display text-xl font-semibold leading-tight text-text">{post.title}</h3>
+                <div className="mt-7 flex items-center justify-between gap-4 border-t border-border/60 pt-4">
+                  <a href={getBlogHref(post.slug)} className="text-sm font-semibold text-accent transition hover:text-text">
+                    Read article
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewPost(post)}
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted transition hover:text-accent"
+                    aria-label={`Preview ${post.title}`}
+                    title="Preview article"
+                  >
+                    <Eye size={16} />
+                    Preview
+                  </button>
+                </div>
               </article>
             </MotionReveal>
           ))
@@ -225,7 +238,7 @@ const HomePage = ({
           </div>
         ) : (
           filteredQuestions.map((question, index) => (
-            <MotionReveal key={question.slug} className="h-full" delay={0.04 * index}>
+            <MotionReveal key={question.slug} delay={0.04 * index}>
               <article className={cardClassName}>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded-full bg-accentSoft px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-accent">
@@ -235,10 +248,9 @@ const HomePage = ({
                     {question.difficulty}
                   </span>
                 </div>
-                <h3 className="mt-5 font-display text-2xl font-semibold text-text">{question.question}</h3>
-                <p className="mt-4 text-sm leading-7 text-muted">{question.summary}</p>
+                <h3 className="mt-5 font-display text-xl font-semibold leading-tight text-text">{question.question}</h3>
                 {question.keywords.length > 0 && (
-                  <div className="mt-5 flex flex-wrap gap-2">
+                  <div className="mt-7 flex flex-wrap gap-2">
                     {question.keywords.slice(0, 4).map((keyword) => (
                       <span key={keyword} className="rounded-full border border-border/60 bg-canvas/60 px-2.5 py-1 text-[11px] font-medium text-muted">
                         {keyword}
@@ -246,7 +258,7 @@ const HomePage = ({
                     ))}
                   </div>
                 )}
-                <a href={getInterviewQuestionHref(question.slug)} className="mt-auto pt-6 inline-flex text-sm font-semibold text-accent">
+                <a href={getInterviewQuestionHref(question.slug)} className="mt-7 inline-flex text-sm font-semibold text-accent">
                   View answer
                 </a>
               </article>
@@ -276,6 +288,7 @@ const HomePage = ({
       </ContentGrid>
 
       <AboutSection />
+      <BlogPreviewModal post={previewPost} onClose={() => setPreviewPost(null)} />
     </main>
   );
 };
