@@ -151,7 +151,7 @@ const HomePage = ({
                   <span className="text-xs text-muted">{post.readTime}</span>
                 </div>
                 <h3 className="mt-5 line-clamp-4 font-display text-xl font-semibold leading-tight text-text">{post.title}</h3>
-                <div className="mt-7 flex items-center justify-between gap-4 border-t border-border/60 pt-4">
+                <div className="mt-auto flex items-center justify-between gap-4 border-t border-border/60 pt-5">
                   <a href={getBlogHref(post.slug)} className="text-sm font-semibold text-accent transition hover:text-text">
                     Read article
                   </a>
@@ -258,7 +258,7 @@ const HomePage = ({
                     ))}
                   </div>
                 )}
-                <a href={getInterviewQuestionHref(question.slug)} className="mt-7 inline-flex text-sm font-semibold text-accent">
+                <a href={getInterviewQuestionHref(question.slug)} className="mt-auto inline-flex pt-5 text-sm font-semibold text-accent">
                   View answer
                 </a>
               </article>
