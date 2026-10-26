@@ -471,8 +471,12 @@ export const fetchPublishedInterviewQuestions = async (
       if (cached && cached.data.questions.length > 0) {
         return cached.data;
       }
+      const fallbackQuestions = latestInterviewQuestions.map(cleanInterviewQuestion);
       return {
-        questions: difficulty === "all" ? latestInterviewQuestions.map(cleanInterviewQuestion) : [],
+        questions:
+          difficulty === "all"
+            ? fallbackQuestions
+            : fallbackQuestions.filter((question) => question.difficulty === difficulty),
         hasMore: false,
         nextCursor: null
       };

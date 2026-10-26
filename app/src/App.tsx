@@ -119,8 +119,8 @@ const HomePage = ({
         {isLoading && displayPosts.length === 0 ? (
           <div className="col-span-full flex min-h-[16rem] flex-col items-center justify-center rounded-[1.75rem] border border-border/70 bg-surface/75 p-8 text-center shadow-panel backdrop-blur">
             <LoaderCircle className="animate-spin text-accent" size={36} />
-            <p className="mt-4 text-base font-semibold text-text">Pulling articles from Notion…</p>
-            <p className="mt-1 text-xs text-muted">Loading latest DevOps & SRE writeups</p>
+            <p className="mt-4 text-base font-semibold text-text">Loading latest articles…</p>
+            <p className="mt-1 text-xs text-muted">Preparing the latest DevOps & SRE writeups</p>
           </div>
         ) : filteredPosts.length === 0 ? (
           <div className="col-span-full rounded-[1.75rem] border border-border/70 bg-surface/75 p-8 text-center shadow-panel">
@@ -204,8 +204,8 @@ const HomePage = ({
         {isLoadingQuestions && displayQuestions.length === 0 ? (
           <div className="col-span-full flex min-h-[16rem] flex-col items-center justify-center rounded-[1.75rem] border border-border/70 bg-surface/75 p-8 text-center shadow-panel backdrop-blur">
             <LoaderCircle className="animate-spin text-accent" size={36} />
-            <p className="mt-4 text-base font-semibold text-text">Pulling interview questions from Notion…</p>
-            <p className="mt-1 text-xs text-muted">Loading published question bank</p>
+            <p className="mt-4 text-base font-semibold text-text">Loading interview questions…</p>
+            <p className="mt-1 text-xs text-muted">Preparing the published question bank</p>
           </div>
         ) : filteredQuestions.length === 0 ? (
           <div className="col-span-full rounded-[1.75rem] border border-border/70 bg-surface/75 p-8 text-center shadow-panel">

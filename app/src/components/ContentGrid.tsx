@@ -24,7 +24,7 @@ export const ContentGrid = ({
   <section id={id} className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
     <SectionHeading eyebrow={eyebrow} title={title} description={description} />
     {headerActions}
-    <div className={`mt-12 grid auto-rows-fr items-stretch gap-5 ${columns}`}>
+    <div className={`mt-12 grid items-stretch gap-5 ${columns}`}>
       {children}
     </div>
   </section>

@@ -191,6 +191,39 @@ export const latestInterviewQuestions: InterviewQuestion[] = [
     keywords: ["Terraform", "Lifecycle"],
     companies: [],
     href: "#/interview-questions/terraform-lifecycle-block-and-why-it-is-needed"
+  },
+  {
+    slug: "linux-load-average-and-how-to-read-it",
+    question: "What is load average in Linux, and how do you read it?",
+    title: "What is load average in Linux, and how do you read it?",
+    summary: "Interview prep for Linux.",
+    domain: "Linux",
+    difficulty: "Beginner",
+    keywords: ["Linux"],
+    companies: [],
+    href: "#/interview-questions/linux-load-average-and-how-to-read-it"
+  },
+  {
+    slug: "kubernetes-readiness-vs-liveness-probes",
+    question: "How are Kubernetes readiness and liveness probes different?",
+    title: "How are Kubernetes readiness and liveness probes different?",
+    summary: "Interview prep for Kubernetes.",
+    domain: "Kubernetes",
+    difficulty: "Intermediate",
+    keywords: ["Kubernetes"],
+    companies: [],
+    href: "#/interview-questions/kubernetes-readiness-vs-liveness-probes"
+  },
+  {
+    slug: "recover-terraform-state-lock-safely",
+    question: "How do you recover a Terraform state lock safely?",
+    title: "How do you recover a Terraform state lock safely?",
+    summary: "Interview prep for Terraform.",
+    domain: "Terraform",
+    difficulty: "Advanced",
+    keywords: ["Terraform", "Lifecycle"],
+    companies: [],
+    href: "#/interview-questions/recover-terraform-state-lock-safely"
   }
 ];
 
