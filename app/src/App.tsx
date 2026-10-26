@@ -28,7 +28,7 @@ import {
 import type { BlogPost, InterviewQuestion } from "@/types";
 
 const cardClassName =
-  "rounded-[1.75rem] border border-border/70 bg-surface/75 p-6 shadow-panel backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-accent/35 hover:bg-elevated";
+  "flex h-full flex-col rounded-[1.75rem] border border-border/70 bg-surface/75 p-6 shadow-panel backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-accent/35 hover:bg-elevated";
 
 interface HomePageProps {
   posts: BlogPost[];
@@ -140,7 +140,7 @@ const HomePage = ({
           </div>
         ) : (
           filteredPosts.map((post, index) => (
-            <MotionReveal key={post.slug} delay={0.04 * index}>
+            <MotionReveal key={post.slug} className="h-full" delay={0.04 * index}>
               <article className="flex h-full flex-col rounded-[1.75rem] border border-border/70 bg-surface/75 p-6 shadow-panel backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-accent/35 hover:bg-elevated">
                 <div className="flex items-center justify-between gap-4">
                   <span className="rounded-full bg-accentSoft px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-accent">
@@ -225,7 +225,7 @@ const HomePage = ({
           </div>
         ) : (
           filteredQuestions.map((question, index) => (
-            <MotionReveal key={question.slug} delay={0.04 * index}>
+            <MotionReveal key={question.slug} className="h-full" delay={0.04 * index}>
               <article className={cardClassName}>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded-full bg-accentSoft px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-accent">
@@ -246,7 +246,7 @@ const HomePage = ({
                     ))}
                   </div>
                 )}
-                <a href={getInterviewQuestionHref(question.slug)} className="mt-6 inline-flex text-sm font-semibold text-accent">
+                <a href={getInterviewQuestionHref(question.slug)} className="mt-auto pt-6 inline-flex text-sm font-semibold text-accent">
                   View answer
                 </a>
               </article>
