@@ -71,6 +71,10 @@ NOTION_INTERVIEW_PUBLISHED_VALUE=Done
 NOTION_INTERVIEW_SORT_PROPERTY=Published Date
 NOTION_INTERVIEW_DIFFICULTY_PROPERTY=Difficulty
 NOTION_INTERVIEW_DIFFICULTY_PROPERTY_TYPE=select
+NOTION_INTERVIEW_DOMAIN_PROPERTY=Domain
+NOTION_INTERVIEW_KEYWORDS_PROPERTY=Keywords
+NOTION_INTERVIEW_COMPANY_PROPERTY=Company
+NOTION_INTERVIEW_QUESTION_PROPERTY=Question
 ALLOWED_ORIGIN=https://stepstodevopsandsre.github.io
 ```
 
@@ -130,10 +134,12 @@ Request flow:
 1. A visitor opens `#interview-questions`.
 2. The frontend calls `/.netlify/functions/interview-questions?pageSize=10`.
 3. The Netlify function queries the interview database for `Status = Done`, sorted by `Published Date`.
-4. The frontend renders question cards using the selected difficulty filter.
+4. The frontend renders question cards using the selected topic, keyword, company, difficulty, and text filters.
 5. A visitor opens a question route like `#/interview-questions/what-is-page-fault`.
 6. The frontend calls `/.netlify/functions/interview-question?slug=what-is-page-fault`.
 7. The function finds the published row by `Slug`, renders `Notion Page URL` content if present, otherwise renders the row page body.
+
+The interview index keeps filtering and pagination server-side. Topic filters use `Domain`, keyword filters use `Keywords`, company filters use `Company`, and text search checks the question title and keywords. Every filter combination has its own cursor and browser cache entry, so switching filters never mixes results from another query.
 
 ## How the Notion Blog Flow Works
 

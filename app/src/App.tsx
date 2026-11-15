@@ -20,12 +20,12 @@ import {
 import { getBlogHref, getInterviewQuestionHref, getRouteFromHash, type AppRoute } from "@/lib/routes";
 import {
   cleanBlogPost,
-  cleanInterviewQuestion,
   fetchPublishedBlogs,
   fetchPublishedInterviewQuestions,
   getCachedBlogs,
   getCachedInterviewQuestions
 } from "@/lib/api";
+import type { InterviewQuestionFilters as InterviewQuestionQueryFilters } from "@/lib/api";
 import type { BlogPost, InterviewQuestion } from "@/types";
 
 const cardClassName =
@@ -42,8 +42,8 @@ interface HomePageProps {
   hasMoreQuestions: boolean;
   isLoadingMoreQuestions: boolean;
   onLoadMoreQuestions: () => void;
-  questionDifficulty: string;
-  onQuestionDifficultyChange: (value: string) => void;
+  questionFilters: InterviewQuestionQueryFilters;
+  onQuestionFiltersChange: (filters: InterviewQuestionQueryFilters) => void;
 }
 
 const HomePage = ({
@@ -57,15 +57,13 @@ const HomePage = ({
   hasMoreQuestions,
   isLoadingMoreQuestions,
   onLoadMoreQuestions,
-  questionDifficulty,
-  onQuestionDifficultyChange
+  questionFilters,
+  onQuestionFiltersChange
 }: HomePageProps) => {
   const displayPosts = posts.length > 0 ? posts : (isLoading ? [] : latestBlogs);
-  const displayQuestions =
-    questions.length > 0 ? questions : (isLoadingQuestions ? [] : latestInterviewQuestions);
+  const displayQuestions = questions.length > 0 ? questions : [];
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [domainFilter, setDomainFilter] = useState("all");
-  const [questionDifficultyFilter, setQuestionDifficultyFilter] = useState(questionDifficulty);
   const [previewPost, setPreviewPost] = useState<BlogPost | null>(null);
 
   const categories = useMemo(
@@ -91,7 +89,13 @@ const HomePage = ({
   const hasActiveFilters = categoryFilter !== "all" || domainFilter !== "all";
 
   const filteredQuestions = displayQuestions;
-  const hasActiveQuestionFilters = questionDifficultyFilter !== "all";
+  const hasActiveQuestionFilters = Boolean(
+    (questionFilters.difficulty && questionFilters.difficulty !== "all") ||
+      (questionFilters.domain && questionFilters.domain !== "all") ||
+      questionFilters.keyword ||
+      (questionFilters.company && questionFilters.company !== "all") ||
+      questionFilters.search
+  );
 
   return (
     <main>
@@ -201,14 +205,10 @@ const HomePage = ({
         description="Practice Questions around Linux, cloud, Kubernetes, observability and production cases ."
         headerActions={
           <InterviewQuestionFilters
-            difficultyFilter={questionDifficultyFilter}
-            onDifficultyChange={(value) => {
-              setQuestionDifficultyFilter(value);
-              onQuestionDifficultyChange(value);
-            }}
+            filters={questionFilters}
+            onChange={onQuestionFiltersChange}
             onClear={() => {
-              setQuestionDifficultyFilter("all");
-              onQuestionDifficultyChange("all");
+              onQuestionFiltersChange({ difficulty: "all", domain: "all", keyword: "", company: "all", search: "" });
             }}
             hasActiveFilters={hasActiveQuestionFilters}
           />
@@ -227,8 +227,7 @@ const HomePage = ({
               <button
                 type="button"
                 onClick={() => {
-                  setQuestionDifficultyFilter("all");
-                  onQuestionDifficultyChange("all");
+                  onQuestionFiltersChange({ difficulty: "all", domain: "all", keyword: "", company: "all", search: "" });
                 }}
                 className="mt-4 text-sm font-semibold text-accent"
               >
@@ -266,7 +265,7 @@ const HomePage = ({
           ))
         )}
 
-        {hasMoreQuestions && !hasActiveQuestionFilters && (
+        {hasMoreQuestions && (
           <div className="col-span-full mt-4 flex justify-center">
             <button
               type="button"
@@ -305,7 +304,13 @@ function App() {
   const [hasMoreQuestions, setHasMoreQuestions] = useState<boolean>(false);
   const [nextQuestionsCursor, setNextQuestionsCursor] = useState<string | null>(null);
   const [isLoadingMoreQuestions, setIsLoadingMoreQuestions] = useState<boolean>(false);
-  const [questionDifficulty, setQuestionDifficulty] = useState("all");
+  const [questionFilters, setQuestionFilters] = useState<InterviewQuestionQueryFilters>({
+    difficulty: "all",
+    domain: "all",
+    keyword: "",
+    company: "all",
+    search: ""
+  });
 
   useEffect(() => {
     const updateRoute = () => setRoute(getRouteFromHash(window.location.hash));
@@ -372,7 +377,7 @@ function App() {
   useEffect(() => {
     let mounted = true;
 
-    const cached = getCachedInterviewQuestions(questionDifficulty);
+    const cached = getCachedInterviewQuestions(questionFilters);
     if (cached && cached.questions && cached.questions.length > 0) {
       setQuestions(cached.questions);
       setHasMoreQuestions(cached.hasMore);
@@ -382,7 +387,7 @@ function App() {
       setIsLoadingQuestions(true);
     }
 
-    fetchPublishedInterviewQuestions(undefined, 10, questionDifficulty, (freshData) => {
+    fetchPublishedInterviewQuestions(undefined, 10, questionFilters, (freshData) => {
       if (mounted && freshData.questions.length > 0) {
         setQuestions(freshData.questions);
         setHasMoreQuestions(freshData.hasMore);
@@ -396,16 +401,11 @@ function App() {
             setQuestions(data.questions);
             setHasMoreQuestions(data.hasMore);
             setNextQuestionsCursor(data.nextCursor);
-          } else if (questionDifficulty === "all") {
-            setQuestions(latestInterviewQuestions.map(cleanInterviewQuestion));
           }
         }
       })
       .catch((err) => {
         console.error("Failed to fetch interview questions dynamically:", err);
-        if (mounted && questionDifficulty === "all") {
-          setQuestions(latestInterviewQuestions.map(cleanInterviewQuestion));
-        }
       })
       .finally(() => {
         if (mounted) {
@@ -416,7 +416,13 @@ function App() {
     return () => {
       mounted = false;
     };
-  }, [questionDifficulty]);
+  }, [
+    questionFilters.difficulty,
+    questionFilters.domain,
+    questionFilters.keyword,
+    questionFilters.company,
+    questionFilters.search
+  ]);
 
   const handleLoadMore = async () => {
     if (!nextCursor || isLoadingMore) return;
@@ -441,7 +447,7 @@ function App() {
     if (!nextQuestionsCursor || isLoadingMoreQuestions) return;
     setIsLoadingMoreQuestions(true);
     try {
-      const res = await fetchPublishedInterviewQuestions(nextQuestionsCursor, 10, questionDifficulty);
+      const res = await fetchPublishedInterviewQuestions(nextQuestionsCursor, 10, questionFilters);
       setQuestions((prev) => {
         const existingSlugs = new Set(prev.map((question) => question.slug));
         const newQuestions = res.questions.filter((question) => !existingSlugs.has(question.slug));
@@ -456,11 +462,11 @@ function App() {
     }
   };
 
-  const handleQuestionDifficultyChange = (value: string) => {
+  const handleQuestionFiltersChange = (filters: InterviewQuestionQueryFilters) => {
     setQuestions([]);
     setNextQuestionsCursor(null);
     setHasMoreQuestions(false);
-    setQuestionDifficulty(value);
+    setQuestionFilters(filters);
   };
 
   useEffect(() => {
@@ -501,8 +507,8 @@ function App() {
             hasMoreQuestions={hasMoreQuestions}
             isLoadingMoreQuestions={isLoadingMoreQuestions}
             onLoadMoreQuestions={handleLoadMoreQuestions}
-          questionDifficulty={questionDifficulty}
-          onQuestionDifficultyChange={handleQuestionDifficultyChange}
+          questionFilters={questionFilters}
+          onQuestionFiltersChange={handleQuestionFiltersChange}
           />
         )}
         <Footer />

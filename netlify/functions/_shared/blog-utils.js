@@ -284,6 +284,28 @@ export const getDifficultyFilter = (propertyName, difficulty, propertyType = "se
   return { property: propertyName, select: { equals: difficulty } };
 };
 
+export const getSelectEqualsFilter = (propertyName, value) => ({
+  property: propertyName,
+  select: { equals: value }
+});
+
+export const getMultiSelectContainsFilter = (propertyName, value) => ({
+  property: propertyName,
+  multi_select: { contains: value }
+});
+
+export const getTitleContainsFilter = (propertyName, value) => ({
+  property: propertyName,
+  title: { contains: value }
+});
+
+export const getInterviewSearchFilter = (questionProperty, keywordsProperty, value) => ({
+  or: [
+    getTitleContainsFilter(questionProperty, value),
+    getMultiSelectContainsFilter(keywordsProperty, value)
+  ]
+});
+
 export const stripMarkdown = (value) =>
   value
     .replace(/```[\s\S]*?```/g, "")

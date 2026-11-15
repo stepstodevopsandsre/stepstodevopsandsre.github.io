@@ -6,6 +6,9 @@ import {
   getPageTitle,
   getPublishedFilter,
   getDifficultyFilter,
+  getInterviewSearchFilter,
+  getMultiSelectContainsFilter,
+  getSelectEqualsFilter,
   getSlugFilter,
   isAllowedOrigin,
   parsePageMap,
@@ -105,6 +108,27 @@ test("getDifficultyFilter creates a select filter for server-side pagination", (
   assert.deepEqual(getDifficultyFilter("Difficulty", "Intermediate"), {
     property: "Difficulty",
     select: { equals: "Intermediate" }
+  });
+});
+
+test("interview topic and tag filters use the correct Notion property operators", () => {
+  assert.deepEqual(getSelectEqualsFilter("Domain", "Kubernetes"), {
+    property: "Domain",
+    select: { equals: "Kubernetes" }
+  });
+  assert.deepEqual(getMultiSelectContainsFilter("Keywords", "Page Fault"), {
+    property: "Keywords",
+    multi_select: { contains: "Page Fault" }
+  });
+  assert.deepEqual(getMultiSelectContainsFilter("Company", "Amazon"), {
+    property: "Company",
+    multi_select: { contains: "Amazon" }
+  });
+  assert.deepEqual(getInterviewSearchFilter("Question", "Keywords", "traffic"), {
+    or: [
+      { property: "Question", title: { contains: "traffic" } },
+      { property: "Keywords", multi_select: { contains: "traffic" } }
+    ]
   });
 });
 

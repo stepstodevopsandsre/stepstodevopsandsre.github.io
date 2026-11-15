@@ -45,14 +45,49 @@ export const getBlogsEndpoint = (cursor?: string, pageSize = 10) => {
   return getEndpoint(`/.netlify/functions/blogs?${params.toString()}`);
 };
 
-export const getInterviewQuestionsEndpoint = (cursor?: string, pageSize = 10, difficulty = "all") => {
+export type InterviewQuestionFilters = {
+  difficulty?: string;
+  domain?: string;
+  keyword?: string;
+  company?: string;
+  search?: string;
+};
+
+type NormalizedInterviewQuestionFilters = Required<InterviewQuestionFilters>;
+
+const normalizeInterviewQuestionFilters = (filters: InterviewQuestionFilters = {}): NormalizedInterviewQuestionFilters => ({
+  difficulty: filters.difficulty?.trim() || "all",
+  domain: filters.domain?.trim() || "all",
+  keyword: filters.keyword?.trim() || "",
+  company: filters.company?.trim() || "all",
+  search: filters.search?.trim() || ""
+});
+
+export const getInterviewQuestionsEndpoint = (
+  cursor?: string,
+  pageSize = 10,
+  filters: InterviewQuestionFilters = {}
+) => {
+  const normalized = normalizeInterviewQuestionFilters(filters);
   const params = new URLSearchParams();
   params.set("pageSize", String(pageSize));
   if (cursor) {
     params.set("cursor", cursor);
   }
-  if (difficulty !== "all") {
-    params.set("difficulty", difficulty);
+  if (normalized.difficulty !== "all") {
+    params.set("difficulty", normalized.difficulty);
+  }
+  if (normalized.domain !== "all") {
+    params.set("domain", normalized.domain);
+  }
+  if (normalized.keyword) {
+    params.set("keyword", normalized.keyword);
+  }
+  if (normalized.company !== "all") {
+    params.set("company", normalized.company);
+  }
+  if (normalized.search) {
+    params.set("search", normalized.search);
   }
   return getEndpoint(`/.netlify/functions/interview-questions?${params.toString()}`);
 };
@@ -211,9 +246,22 @@ export const getCachedBlogs = (): FetchBlogsResult | null => {
   return cached ? cached.data : null;
 };
 
-const getStoredInterviewQuestionsCache = (difficulty = "all"): InterviewQuestionsCacheEntry | null => {
+const getInterviewQuestionsCacheKey = (filters: InterviewQuestionFilters = {}) => {
+  const normalized = normalizeInterviewQuestionFilters(filters);
+  return [
+    normalized.difficulty,
+    normalized.domain,
+    normalized.keyword.toLowerCase(),
+    normalized.company,
+    normalized.search.toLowerCase()
+  ]
+    .map((value) => encodeURIComponent(value))
+    .join("_");
+};
+
+const getStoredInterviewQuestionsCache = (filters: InterviewQuestionFilters = {}): InterviewQuestionsCacheEntry | null => {
   try {
-    const raw = localStorage.getItem(`${INTERVIEW_QUESTIONS_CACHE_KEY}_${difficulty}`);
+    const raw = localStorage.getItem(`${INTERVIEW_QUESTIONS_CACHE_KEY}_${getInterviewQuestionsCacheKey(filters)}`);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as InterviewQuestionsCacheEntry;
     if (!parsed || !parsed.data || !Array.isArray(parsed.data.questions) || parsed.data.questions.length === 0) {
@@ -225,20 +273,20 @@ const getStoredInterviewQuestionsCache = (difficulty = "all"): InterviewQuestion
   }
 };
 
-const setStoredInterviewQuestionsCache = (data: FetchInterviewQuestionsResult, difficulty = "all") => {
+const setStoredInterviewQuestionsCache = (data: FetchInterviewQuestionsResult, filters: InterviewQuestionFilters = {}) => {
   try {
     if (!data || !Array.isArray(data.questions) || data.questions.length === 0) {
       return;
     }
     const entry: InterviewQuestionsCacheEntry = { timestamp: Date.now(), data };
-    localStorage.setItem(`${INTERVIEW_QUESTIONS_CACHE_KEY}_${difficulty}`, JSON.stringify(entry));
+    localStorage.setItem(`${INTERVIEW_QUESTIONS_CACHE_KEY}_${getInterviewQuestionsCacheKey(filters)}`, JSON.stringify(entry));
   } catch {
     // Ignore storage quota errors
   }
 };
 
-export const getCachedInterviewQuestions = (difficulty = "all"): FetchInterviewQuestionsResult | null => {
-  const cached = getStoredInterviewQuestionsCache(difficulty);
+export const getCachedInterviewQuestions = (filters: InterviewQuestionFilters = {}): FetchInterviewQuestionsResult | null => {
+  const cached = getStoredInterviewQuestionsCache(filters);
   return cached ? cached.data : null;
 };
 
@@ -418,19 +466,20 @@ export const fetchBlogArticle = async (slug: string): Promise<BlogArticle> => {
 export const fetchPublishedInterviewQuestions = async (
   cursor?: string,
   pageSize = 10,
-  difficulty = "all",
+  filters: InterviewQuestionFilters = {},
   onBackgroundUpdate?: (data: FetchInterviewQuestionsResult) => void
 ): Promise<FetchInterviewQuestionsResult> => {
+  const normalizedFilters = normalizeInterviewQuestionFilters(filters);
   if (!cursor) {
-    const cached = getStoredInterviewQuestionsCache(difficulty);
+    const cached = getStoredInterviewQuestionsCache(normalizedFilters);
     const isFresh = cached && Date.now() - cached.timestamp < CACHE_TTL_MS;
 
     if (cached && cached.data.questions.length > 0) {
       if (onBackgroundUpdate) {
-        fetchPublishedInterviewQuestionsFromNetwork(undefined, pageSize, difficulty)
+        fetchPublishedInterviewQuestionsFromNetwork(undefined, pageSize, normalizedFilters)
           .then((fresh) => {
             if (fresh.questions.length > 0) {
-              setStoredInterviewQuestionsCache(fresh, difficulty);
+              setStoredInterviewQuestionsCache(fresh, normalizedFilters);
               onBackgroundUpdate(fresh);
             }
           })
@@ -445,14 +494,14 @@ export const fetchPublishedInterviewQuestions = async (
   }
 
   try {
-    const result = await fetchPublishedInterviewQuestionsFromNetwork(cursor, pageSize, difficulty);
+    const result = await fetchPublishedInterviewQuestionsFromNetwork(cursor, pageSize, normalizedFilters);
 
     if (!cursor) {
       if (result.questions.length > 0) {
-        setStoredInterviewQuestionsCache(result, difficulty);
+        setStoredInterviewQuestionsCache(result, normalizedFilters);
       }
     } else {
-      const existingCache = getStoredInterviewQuestionsCache(difficulty);
+      const existingCache = getStoredInterviewQuestionsCache(normalizedFilters);
       if (existingCache) {
         const existingSlugs = new Set(existingCache.data.questions.map((q) => q.slug));
         const newQuestions = result.questions.filter((q) => !existingSlugs.has(q.slug));
@@ -460,23 +509,33 @@ export const fetchPublishedInterviewQuestions = async (
           questions: [...existingCache.data.questions, ...newQuestions],
           hasMore: result.hasMore,
           nextCursor: result.nextCursor
-        }, difficulty);
+        }, normalizedFilters);
       }
     }
 
     return result;
   } catch (err) {
     if (!cursor) {
-      const cached = getStoredInterviewQuestionsCache(difficulty);
+      const cached = getStoredInterviewQuestionsCache(normalizedFilters);
       if (cached && cached.data.questions.length > 0) {
         return cached.data;
       }
       const fallbackQuestions = latestInterviewQuestions.map(cleanInterviewQuestion);
+      const matchesFilters = (question: InterviewQuestion) => {
+        const normalizedKeyword = normalizedFilters.keyword.toLowerCase();
+        const normalizedSearch = normalizedFilters.search.toLowerCase();
+        return (
+          (normalizedFilters.difficulty === "all" || question.difficulty === normalizedFilters.difficulty) &&
+          (normalizedFilters.domain === "all" || question.domain === normalizedFilters.domain) &&
+          (!normalizedFilters.company || normalizedFilters.company === "all" || question.companies.includes(normalizedFilters.company)) &&
+          (!normalizedKeyword || question.keywords.some((keyword) => keyword.toLowerCase() === normalizedKeyword)) &&
+          (!normalizedSearch ||
+            question.question.toLowerCase().includes(normalizedSearch) ||
+            question.keywords.some((keyword) => keyword.toLowerCase().includes(normalizedSearch)))
+        );
+      };
       return {
-        questions:
-          difficulty === "all"
-            ? fallbackQuestions
-            : fallbackQuestions.filter((question) => question.difficulty === difficulty),
+        questions: fallbackQuestions.filter(matchesFilters),
         hasMore: false,
         nextCursor: null
       };
@@ -488,9 +547,10 @@ export const fetchPublishedInterviewQuestions = async (
 const fetchPublishedInterviewQuestionsFromNetwork = async (
   cursor?: string,
   pageSize = 10,
-  difficulty = "all"
+  filters: InterviewQuestionFilters = {}
 ): Promise<FetchInterviewQuestionsResult> => {
-  const response = await fetch(getInterviewQuestionsEndpoint(cursor, pageSize, difficulty), {
+  const normalizedFilters = normalizeInterviewQuestionFilters(filters);
+  const response = await fetch(getInterviewQuestionsEndpoint(cursor, pageSize, normalizedFilters), {
     headers: {
       Accept: "application/json"
     }
@@ -509,7 +569,7 @@ const fetchPublishedInterviewQuestionsFromNetwork = async (
   const rawQuestions = payload.questions ?? [];
   let questions = rawQuestions.map(cleanInterviewQuestion);
 
-  if (!cursor && questions.length === 0 && difficulty === "all") {
+  if (!cursor && questions.length === 0 && Object.values(normalizedFilters).every((value) => !value || value === "all")) {
     questions = latestInterviewQuestions.map(cleanInterviewQuestion);
   }
 

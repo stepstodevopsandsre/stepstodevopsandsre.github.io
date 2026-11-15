@@ -3,7 +3,10 @@ import {
   DEFAULT_ORIGIN,
   createCorsHeaders,
   getDifficultyFilter,
+  getInterviewSearchFilter,
+  getMultiSelectContainsFilter,
   getPublishedFilter,
+  getSelectEqualsFilter,
   isAllowedOrigin,
   logAndHideNotionError,
   parseNotionPageToInterviewQuestion
@@ -44,12 +47,20 @@ export const handler = async (event) => {
   const sortProperty = process.env.NOTION_INTERVIEW_SORT_PROPERTY || "Published Date";
   const difficultyProperty = process.env.NOTION_INTERVIEW_DIFFICULTY_PROPERTY || "Difficulty";
   const difficultyPropertyType = process.env.NOTION_INTERVIEW_DIFFICULTY_PROPERTY_TYPE || "select";
+  const domainProperty = process.env.NOTION_INTERVIEW_DOMAIN_PROPERTY || "Domain";
+  const keywordsProperty = process.env.NOTION_INTERVIEW_KEYWORDS_PROPERTY || "Keywords";
+  const companyProperty = process.env.NOTION_INTERVIEW_COMPANY_PROPERTY || "Company";
+  const questionProperty = process.env.NOTION_INTERVIEW_QUESTION_PROPERTY || "Question";
 
   const pageSizeParam = event.queryStringParameters?.pageSize;
   const cursorParam = event.queryStringParameters?.cursor;
   const pageSize = pageSizeParam ? Math.min(Math.max(parseInt(pageSizeParam, 10) || 10, 1), 100) : 10;
   const startCursor = cursorParam || undefined;
   const difficultyParam = event.queryStringParameters?.difficulty;
+  const domainParam = event.queryStringParameters?.domain?.trim();
+  const keywordParam = event.queryStringParameters?.keyword?.trim();
+  const companyParam = event.queryStringParameters?.company?.trim();
+  const searchParam = event.queryStringParameters?.search?.trim();
 
   const cacheHeaders = {
     ...createCorsHeaders(requestOrigin || allowedOrigin),
@@ -83,6 +94,18 @@ export const handler = async (event) => {
     const filters = [getPublishedFilter(statusProperty, publishedValue, statusPropertyType)];
     if (difficultyParam && difficultyParam !== "all") {
       filters.push(getDifficultyFilter(difficultyProperty, difficultyParam, difficultyPropertyType));
+    }
+    if (domainParam && domainParam !== "all") {
+      filters.push(getSelectEqualsFilter(domainProperty, domainParam));
+    }
+    if (keywordParam) {
+      filters.push(getMultiSelectContainsFilter(keywordsProperty, keywordParam));
+    }
+    if (companyParam && companyParam !== "all") {
+      filters.push(getMultiSelectContainsFilter(companyProperty, companyParam));
+    }
+    if (searchParam) {
+      filters.push(getInterviewSearchFilter(questionProperty, keywordsProperty, searchParam));
     }
 
     const response = await notion.databases.query({
