@@ -66,6 +66,27 @@ button {
   -webkit-tap-highlight-color: transparent;
 }
 
+.scroll-progress-ring {
+  background: conic-gradient(
+    from -90deg,
+    #22d3ee 0%,
+    #8b5cf6 var(--scroll-progress),
+    rgba(148, 163, 184, 0.32) var(--scroll-progress),
+    rgba(148, 163, 184, 0.32) 100%
+  );
+  transition: background 160ms linear;
+}
+
+.dark .scroll-progress-ring {
+  background: conic-gradient(
+    from -90deg,
+    #38bdf8 0%,
+    #a78bfa var(--scroll-progress),
+    rgba(100, 116, 139, 0.42) var(--scroll-progress),
+    rgba(100, 116, 139, 0.42) 100%
+  );
+}
+
 .prose pre {
   overflow-x: auto;
   border-radius: 1rem;

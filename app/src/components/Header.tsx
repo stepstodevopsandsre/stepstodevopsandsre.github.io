@@ -1,17 +1,56 @@
 import { AlignRight, ArrowUpRight, Github, X } from "lucide-react";
-import { useState } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
 import { navigation, site } from "@/data/siteContent";
 import { ThemeToggle } from "./ThemeToggle";
 
 export const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  useEffect(() => {
+    let frame = 0;
+
+    const updateScrollProgress = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const scrollableHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = scrollableHeight > 0 ? (window.scrollY / scrollableHeight) * 100 : 0;
+        setScrollProgress(Math.min(100, Math.max(0, progress)));
+      });
+    };
+
+    updateScrollProgress();
+    window.addEventListener("scroll", updateScrollProgress, { passive: true });
+    window.addEventListener("resize", updateScrollProgress);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", updateScrollProgress);
+      window.removeEventListener("resize", updateScrollProgress);
+    };
+  }, []);
+
+  const progressStyle = {
+    "--scroll-progress": `${scrollProgress}%`
+  } as CSSProperties;
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/50 bg-canvas/70 backdrop-blur-2xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <a href="#home" className="flex items-center gap-3">
-          <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/30 bg-text text-sm font-bold text-canvas shadow-glow">
-            SR
+          <span
+            className="scroll-progress-ring inline-flex h-11 w-11 items-center justify-center rounded-2xl p-[2px] text-sm font-bold text-canvas shadow-glow"
+            style={progressStyle}
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(scrollProgress)}
+            aria-label={`Reading progress: ${Math.round(scrollProgress)} percent`}
+            title={`Reading progress: ${Math.round(scrollProgress)}%`}
+          >
+            <span className="inline-flex h-full w-full items-center justify-center rounded-[0.85rem] bg-text">
+              SR
+            </span>
           </span>
           <div>
             <p className="font-display text-base font-semibold tracking-tight text-text">{site.name}</p>
