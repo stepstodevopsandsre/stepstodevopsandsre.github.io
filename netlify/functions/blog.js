@@ -1,6 +1,7 @@
 import { Client } from "@notionhq/client";
 import { marked } from "marked";
 import { NotionToMarkdown } from "notion-to-md";
+import { highlightedCodeRenderer } from "./_shared/markdown-renderer.js";
 import {
   DEFAULT_ORIGIN,
   calculateReadingTime,
@@ -18,6 +19,7 @@ marked.setOptions({
   gfm: true,
   breaks: false
 });
+marked.use({ renderer: highlightedCodeRenderer });
 
 const resolvePageIdFromDatabase = async (notion, slug) => {
   const databaseId = process.env.NOTION_BLOG_DATABASE_ID;

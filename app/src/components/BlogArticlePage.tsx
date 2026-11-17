@@ -431,7 +431,7 @@ export const BlogArticlePage = ({ slug, allPosts }: BlogArticlePageProps) => {
               className="mt-8 overflow-x-hidden rounded-[2rem] border border-border/70 bg-surface/80 p-4 shadow-panel sm:p-8"
             >
               <article
-                className="prose prose-slate max-w-none overflow-x-hidden prose-headings:font-display prose-headings:tracking-tight prose-a:text-accent dark:prose-invert"
+                className="article-content prose prose-slate max-w-none overflow-x-hidden prose-headings:font-display prose-headings:tracking-tight prose-a:text-accent dark:prose-invert"
                 dangerouslySetInnerHTML={{ __html: processedHtml }}
               />
             </motion.section>
