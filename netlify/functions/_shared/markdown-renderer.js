@@ -49,7 +49,7 @@ export const renderHighlightedCode = ({ text = "", lang = "" }) => {
       : hljs.highlightAuto(text).value;
   const className = language ? `hljs language-${language}` : "hljs";
 
-  return `<div class="code-block-shell"><div class="code-block-toolbar"><span class="code-block-language">${languageLabel(language)}</span><span class="code-block-hint">Read, copy, run</span></div><pre><code class="${className}">${highlighted}</code></pre></div>`;
+  return `<div class="code-block-shell"><div class="code-block-toolbar"><span class="code-block-language">${languageLabel(language)}</span><span class="code-block-hint">Syntax highlighted</span></div><pre><code class="${className}">${highlighted}</code></pre></div>`;
 };
 
 export const highlightedCodeRenderer = {
