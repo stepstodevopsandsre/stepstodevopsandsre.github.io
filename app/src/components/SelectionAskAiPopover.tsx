@@ -6,10 +6,10 @@ type PromptAction = "explain" | "example" | "interview";
 type SelectionState = { text: string; top: number; left: number };
 
 const MAX_SELECTION_LENGTH = 5000;
-const providers: { name: Provider; url: string; icon: typeof Brain }[] = [
-  { name: "ChatGPT", url: "https://chatgpt.com/", icon: MessageCircle },
-  { name: "Gemini", url: "https://gemini.google.com/app", icon: Sparkles },
-  { name: "Claude", url: "https://claude.ai/new", icon: Brain }
+const providers: { name: Provider; url: string; queryKey: string; icon: typeof Brain }[] = [
+  { name: "ChatGPT", url: "https://chatgpt.com/", queryKey: "q", icon: MessageCircle },
+  { name: "Gemini", url: "https://gemini.google.com/app", queryKey: "prompt", icon: Sparkles },
+  { name: "Claude", url: "https://claude.ai/new", queryKey: "q", icon: Brain }
 ];
 
 const actionLabels: Record<PromptAction, { label: string; icon: typeof BookOpen; instruction: string }> = {
@@ -45,6 +45,12 @@ const copyText = async (value: string) => {
   const copied = document.execCommand("copy");
   textarea.remove();
   return copied;
+};
+
+const createProviderUrl = (baseUrl: string, queryKey: string, prompt: string) => {
+  // Keep the URL reasonably small. The complete prompt is copied separately.
+  const urlPrompt = prompt.slice(0, 1800);
+  return `${baseUrl}?${queryKey}=${encodeURIComponent(urlPrompt)}`;
 };
 
 export const SelectionAskAiPopover = () => {
@@ -108,9 +114,10 @@ export const SelectionAskAiPopover = () => {
     setStatus(copied ? "Prompt copied. Paste it into your AI chat." : "Copy failed. Please try again.");
     setIsOpen(false);
   };
-  const openProvider = async (provider: Provider, url: string) => {
-    const copied = await copyText(buildPrompt(selection.text, "Help me understand the selected text and give a practical explanation."));
-    window.open(url, "_blank", "noopener,noreferrer");
+  const openProvider = async (provider: Provider, url: string, queryKey: string) => {
+    const prompt = buildPrompt(selection.text, "Help me understand the selected text and give a practical explanation.");
+    const copied = await copyText(prompt);
+    window.open(createProviderUrl(url, queryKey, prompt), "_blank", "noopener,noreferrer");
     setStatus(copied ? `Prompt copied. Paste it into ${provider}.` : `Opened ${provider}. Copy failed.`);
     setIsOpen(false);
   };
@@ -124,7 +131,7 @@ export const SelectionAskAiPopover = () => {
       <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">Create a prompt</p>
       {Object.entries(actionLabels).map(([key, action]) => { const Icon = action.icon; return <button key={key} type="button" onClick={() => runAction(key as PromptAction)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium text-text transition hover:bg-accentSoft hover:text-accent"><Icon size={14} />{action.label}<Copy size={12} className="ml-auto text-muted" /></button>; })}
       <p className="px-3 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted">Open an AI chat</p>
-      {providers.map(({ name, url, icon: Icon }) => <button key={name} type="button" onClick={() => openProvider(name, url)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium text-text transition hover:bg-accentSoft hover:text-accent"><Icon size={14} />{name}<ExternalLink size={12} className="ml-auto text-muted" /></button>)}
+      {providers.map(({ name, url, queryKey, icon: Icon }) => <button key={name} type="button" onClick={() => openProvider(name, url, queryKey)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-xs font-medium text-text transition hover:bg-accentSoft hover:text-accent"><Icon size={14} />{name}<ExternalLink size={12} className="ml-auto text-muted" /></button>)}
     </div>}
     {status && <p className="flex items-start gap-1.5 border-t border-border/60 px-3 pt-2 text-[11px] leading-4 text-muted"><Check size={13} className="mt-0.5 shrink-0 text-success" />{status}</p>}
   </div>;
