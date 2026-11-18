@@ -6,9 +6,9 @@ type PromptAction = "explain" | "example" | "interview";
 type SelectionState = { text: string; top: number; left: number };
 
 const MAX_SELECTION_LENGTH = 5000;
-const providers: { name: Provider; url: string; queryKey: string; icon: typeof Brain }[] = [
+const providers: { name: Provider; url: string; queryKey?: string; icon: typeof Brain }[] = [
   { name: "ChatGPT", url: "https://chatgpt.com/", queryKey: "q", icon: MessageCircle },
-  { name: "Gemini", url: "https://gemini.google.com/app", queryKey: "prompt", icon: Sparkles },
+  { name: "Gemini", url: "https://gemini.google.com/app", icon: Sparkles },
   { name: "Claude", url: "https://claude.ai/new", queryKey: "q", icon: Brain }
 ];
 
@@ -114,11 +114,16 @@ export const SelectionAskAiPopover = () => {
     setStatus(copied ? "Prompt copied. Paste it into your AI chat." : "Copy failed. Please try again.");
     setIsOpen(false);
   };
-  const openProvider = async (provider: Provider, url: string, queryKey: string) => {
+  const openProvider = async (provider: Provider, url: string, queryKey?: string) => {
     const prompt = buildPrompt(selection.text, "Help me understand the selected text and give a practical explanation.");
+    // Gemini currently ignores prompt query parameters in its web composer.
+    // Open it normally and rely on the copied prompt instead of exposing a misleading URL.
+    const targetUrl = queryKey ? createProviderUrl(url, queryKey, prompt) : url;
+    window.open(targetUrl, "_blank", "noopener,noreferrer");
     const copied = await copyText(prompt);
-    window.open(createProviderUrl(url, queryKey, prompt), "_blank", "noopener,noreferrer");
-    setStatus(copied ? `Prompt copied. Paste it into ${provider}.` : `Opened ${provider}. Copy failed.`);
+    setStatus(copied
+      ? queryKey ? `Prompt copied and added to ${provider}.` : `Prompt copied. Paste it into ${provider}.`
+      : `Opened ${provider}. Copy failed.`);
     setIsOpen(false);
   };
 
