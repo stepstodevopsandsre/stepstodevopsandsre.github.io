@@ -299,6 +299,18 @@ export const getTitleContainsFilter = (propertyName, value) => ({
   title: { contains: value }
 });
 
+export const getTextContainsFilter = (propertyName, value, propertyType = "rich_text") => {
+  if (propertyType === "select") {
+    return { property: propertyName, select: { equals: value } };
+  }
+
+  if (propertyType === "multi_select") {
+    return { property: propertyName, multi_select: { contains: value } };
+  }
+
+  return { property: propertyName, rich_text: { contains: value } };
+};
+
 export const getInterviewSearchFilter = (questionProperty, keywordsProperty, value) => ({
   or: [
     getTitleContainsFilter(questionProperty, value),

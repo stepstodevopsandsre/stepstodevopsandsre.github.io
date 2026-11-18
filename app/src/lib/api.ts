@@ -36,11 +36,33 @@ const getEndpoint = (path: string) => {
 export const getBlogEndpoint = (slug: string) =>
   getEndpoint(`/.netlify/functions/blog?slug=${encodeURIComponent(slug)}`);
 
-export const getBlogsEndpoint = (cursor?: string, pageSize = 10) => {
+export type BlogFilters = {
+  category?: string;
+  domain?: string;
+  search?: string;
+};
+
+const normalizeBlogFilters = (filters: BlogFilters = {}) => ({
+  category: filters.category?.trim() || "all",
+  domain: filters.domain?.trim() || "all",
+  search: filters.search?.trim() || ""
+});
+
+export const getBlogsEndpoint = (cursor?: string, pageSize = 10, filters: BlogFilters = {}) => {
+  const normalized = normalizeBlogFilters(filters);
   const params = new URLSearchParams();
   params.set("pageSize", String(pageSize));
   if (cursor) {
     params.set("cursor", cursor);
+  }
+  if (normalized.category !== "all") {
+    params.set("category", normalized.category);
+  }
+  if (normalized.domain !== "all") {
+    params.set("domain", normalized.domain);
+  }
+  if (normalized.search) {
+    params.set("search", normalized.search);
   }
   return getEndpoint(`/.netlify/functions/blogs?${params.toString()}`);
 };
@@ -293,17 +315,20 @@ export const getCachedInterviewQuestions = (filters: InterviewQuestionFilters = 
 export const fetchPublishedBlogs = async (
   cursor?: string,
   pageSize = 10,
+  filters: BlogFilters = {},
   onBackgroundUpdate?: (data: FetchBlogsResult) => void
 ): Promise<FetchBlogsResult> => {
+  const normalizedFilters = normalizeBlogFilters(filters);
+  const hasFilters = Object.values(normalizedFilters).some((value) => value && value !== "all");
   // Check local cache for initial load (when cursor is undefined)
-  if (!cursor) {
+  if (!cursor && !hasFilters) {
     const cached = getStoredBlogsCache();
     const isFresh = cached && Date.now() - cached.timestamp < CACHE_TTL_MS;
 
     if (cached && cached.data.posts.length > 0) {
       // Trigger a background update if stale or for revalidation
       if (onBackgroundUpdate) {
-        fetchPublishedBlogsFromNetwork(undefined, pageSize)
+        fetchPublishedBlogsFromNetwork(undefined, pageSize, filters)
           .then((fresh) => {
             if (fresh.posts.length > 0) {
               setStoredBlogsCache(fresh);
@@ -321,13 +346,13 @@ export const fetchPublishedBlogs = async (
   }
 
   try {
-    const result = await fetchPublishedBlogsFromNetwork(cursor, pageSize);
+    const result = await fetchPublishedBlogsFromNetwork(cursor, pageSize, filters);
 
-    if (!cursor) {
+    if (!cursor && !hasFilters) {
       if (result.posts.length > 0) {
         setStoredBlogsCache(result);
       }
-    } else {
+    } else if (cursor && !hasFilters) {
       // Append newly fetched page to existing cached list if present
       const existingCache = getStoredBlogsCache();
       if (existingCache) {
@@ -345,7 +370,7 @@ export const fetchPublishedBlogs = async (
 
     return result;
   } catch (err) {
-    if (!cursor) {
+    if (!cursor && !hasFilters) {
       const cached = getStoredBlogsCache();
       if (cached && cached.data.posts.length > 0) {
         return cached.data;
@@ -362,9 +387,11 @@ export const fetchPublishedBlogs = async (
 
 const fetchPublishedBlogsFromNetwork = async (
   cursor?: string,
-  pageSize = 10
+  pageSize = 10,
+  filters: BlogFilters = {}
 ): Promise<FetchBlogsResult> => {
-  const response = await fetch(getBlogsEndpoint(cursor, pageSize), {
+  const normalizedFilters = normalizeBlogFilters(filters);
+  const response = await fetch(getBlogsEndpoint(cursor, pageSize, normalizedFilters), {
     headers: {
       Accept: "application/json"
     }
@@ -383,7 +410,7 @@ const fetchPublishedBlogsFromNetwork = async (
   const rawPosts = payload.posts ?? [];
   let posts = rawPosts.map(cleanBlogPost);
 
-  if (!cursor && posts.length === 0) {
+  if (!cursor && posts.length === 0 && Object.values(normalizedFilters).every((value) => !value || value === "all")) {
     posts = latestBlogs.map(cleanBlogPost);
   }
 

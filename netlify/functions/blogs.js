@@ -3,6 +3,8 @@ import {
   DEFAULT_ORIGIN,
   createCorsHeaders,
   getPublishedFilter,
+  getTitleContainsFilter,
+  getTextContainsFilter,
   isAllowedOrigin,
   parseNotionPageToPost
 } from "./_shared/blog-utils.js";
@@ -39,11 +41,21 @@ export const handler = async (event) => {
   const statusProperty = process.env.NOTION_BLOG_STATUS_PROPERTY || "Status";
   const statusPropertyType = process.env.NOTION_BLOG_STATUS_PROPERTY_TYPE || "status";
   const publishedValue = process.env.NOTION_BLOG_PUBLISHED_VALUE || "Done";
+  const titleProperty = process.env.NOTION_BLOG_TITLE_PROPERTY || "Name";
+  const tagProperty = process.env.NOTION_BLOG_TAG_PROPERTY || "Tag";
+  const tagPropertyType = process.env.NOTION_BLOG_TAG_PROPERTY_TYPE || "select";
+  const domainProperty = process.env.NOTION_BLOG_DOMAIN_PROPERTY || "Domain";
+  const domainPropertyType = process.env.NOTION_BLOG_DOMAIN_PROPERTY_TYPE || "rich_text";
+  const summaryProperty = process.env.NOTION_BLOG_SUMMARY_PROPERTY || "Summary";
+  const summaryPropertyType = process.env.NOTION_BLOG_SUMMARY_PROPERTY_TYPE || "rich_text";
 
   const pageSizeParam = event.queryStringParameters?.pageSize;
   const cursorParam = event.queryStringParameters?.cursor;
   const pageSize = pageSizeParam ? Math.min(Math.max(parseInt(pageSizeParam, 10) || 10, 1), 100) : 10;
   const startCursor = cursorParam || undefined;
+  const categoryParam = event.queryStringParameters?.category?.trim();
+  const domainParam = event.queryStringParameters?.domain?.trim();
+  const searchParam = event.queryStringParameters?.search?.trim();
 
   const cacheHeaders = {
     ...createCorsHeaders(requestOrigin || allowedOrigin),
@@ -92,9 +104,25 @@ export const handler = async (event) => {
 
   try {
     const notion = new Client({ auth: notionToken });
+    const filters = [getPublishedFilter(statusProperty, publishedValue, statusPropertyType)];
+    if (categoryParam && categoryParam !== "all") {
+      filters.push(getTextContainsFilter(tagProperty, categoryParam, tagPropertyType));
+    }
+    if (domainParam && domainParam !== "all") {
+      filters.push(getTextContainsFilter(domainProperty, domainParam, domainPropertyType));
+    }
+    if (searchParam) {
+      filters.push({
+        or: [
+          getTitleContainsFilter(titleProperty, searchParam),
+          getTextContainsFilter(summaryProperty, searchParam, summaryPropertyType)
+        ]
+      });
+    }
+
     const response = await notion.databases.query({
       database_id: databaseId,
-      filter: getPublishedFilter(statusProperty, publishedValue, statusPropertyType),
+      filter: filters.length === 1 ? filters[0] : { and: filters },
       sorts: [
         {
           timestamp: "last_edited_time",

@@ -25,7 +25,7 @@ import {
   getCachedBlogs,
   getCachedInterviewQuestions
 } from "@/lib/api";
-import type { InterviewQuestionFilters as InterviewQuestionQueryFilters } from "@/lib/api";
+import type { BlogFilters as BlogQueryFilters, InterviewQuestionFilters as InterviewQuestionQueryFilters } from "@/lib/api";
 import type { BlogPost, InterviewQuestion } from "@/types";
 
 const cardClassName =
@@ -44,6 +44,8 @@ interface HomePageProps {
   onLoadMoreQuestions: () => void;
   questionFilters: InterviewQuestionQueryFilters;
   onQuestionFiltersChange: (filters: InterviewQuestionQueryFilters) => void;
+  blogFilters: BlogQueryFilters;
+  onBlogFiltersChange: (filters: BlogQueryFilters) => void;
 }
 
 const HomePage = ({
@@ -58,12 +60,12 @@ const HomePage = ({
   isLoadingMoreQuestions,
   onLoadMoreQuestions,
   questionFilters,
-  onQuestionFiltersChange
+  onQuestionFiltersChange,
+  blogFilters,
+  onBlogFiltersChange
 }: HomePageProps) => {
   const displayPosts = posts.length > 0 ? posts : (isLoading ? [] : latestBlogs);
   const displayQuestions = questions.length > 0 ? questions : [];
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [domainFilter, setDomainFilter] = useState("all");
   const [previewPost, setPreviewPost] = useState<BlogPost | null>(null);
 
   const categories = useMemo(
@@ -76,17 +78,12 @@ const HomePage = ({
     [displayPosts]
   );
 
-  const filteredPosts = useMemo(
-    () =>
-      displayPosts.filter((post) => {
-        const matchesCategory = categoryFilter === "all" || post.tag === categoryFilter;
-        const matchesDomain = domainFilter === "all" || post.domain === domainFilter;
-        return matchesCategory && matchesDomain;
-      }),
-    [displayPosts, categoryFilter, domainFilter]
+  const filteredPosts = displayPosts;
+  const hasActiveFilters = Boolean(
+    (blogFilters.category && blogFilters.category !== "all") ||
+      (blogFilters.domain && blogFilters.domain !== "all") ||
+      blogFilters.search
   );
-
-  const hasActiveFilters = categoryFilter !== "all" || domainFilter !== "all";
 
   const filteredQuestions = displayQuestions;
   const hasActiveQuestionFilters = Boolean(
@@ -110,14 +107,9 @@ const HomePage = ({
           <BlogFilters
             categories={categories}
             domains={domains}
-            categoryFilter={categoryFilter}
-            domainFilter={domainFilter}
-            onCategoryChange={setCategoryFilter}
-            onDomainChange={setDomainFilter}
-            onClear={() => {
-              setCategoryFilter("all");
-              setDomainFilter("all");
-            }}
+            filters={blogFilters}
+            onChange={onBlogFiltersChange}
+            onClear={() => onBlogFiltersChange({ category: "all", domain: "all", search: "" })}
             hasActiveFilters={hasActiveFilters}
           />
         }
@@ -135,8 +127,7 @@ const HomePage = ({
               <button
                 type="button"
                 onClick={() => {
-                  setCategoryFilter("all");
-                  setDomainFilter("all");
+                  onBlogFiltersChange({ category: "all", domain: "all", search: "" });
                 }}
                 className="mt-4 text-sm font-semibold text-accent"
               >
@@ -175,7 +166,7 @@ const HomePage = ({
           ))
         )}
 
-        {hasMore && !hasActiveFilters && (
+        {hasMore && (
           <div className="col-span-full mt-4 flex justify-center">
             <button
               type="button"
@@ -299,6 +290,7 @@ function App() {
   const [hasMore, setHasMore] = useState<boolean>(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
+  const [blogFilters, setBlogFilters] = useState<BlogQueryFilters>({ category: "all", domain: "all", search: "" });
   const [questions, setQuestions] = useState<InterviewQuestion[]>([]);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState<boolean>(true);
   const [hasMoreQuestions, setHasMoreQuestions] = useState<boolean>(false);
@@ -327,7 +319,12 @@ function App() {
     let mounted = true;
 
     // Check cached data synchronously for instant initial load
-    const cached = getCachedBlogs();
+    const hasBlogFilters = Boolean(
+      (blogFilters.category && blogFilters.category !== "all") ||
+        (blogFilters.domain && blogFilters.domain !== "all") ||
+        blogFilters.search
+    );
+    const cached = hasBlogFilters ? null : getCachedBlogs();
     if (cached && cached.posts && cached.posts.length > 0) {
       setBlogs(cached.posts);
       setHasMore(cached.hasMore);
@@ -338,7 +335,7 @@ function App() {
     }
 
     // Fetch initial page from network (with stale-while-revalidate background callback)
-    fetchPublishedBlogs(undefined, 10, (freshData) => {
+    fetchPublishedBlogs(undefined, 10, blogFilters, (freshData) => {
       if (mounted && freshData.posts.length > 0) {
         setBlogs(freshData.posts);
         setHasMore(freshData.hasMore);
@@ -352,14 +349,14 @@ function App() {
             setBlogs(data.posts);
             setHasMore(data.hasMore);
             setNextCursor(data.nextCursor);
-          } else if (blogs.length === 0) {
+          } else if (!hasBlogFilters && blogs.length === 0) {
             setBlogs(latestBlogs.map(cleanBlogPost));
           }
         }
       })
       .catch((err) => {
         console.error("Failed to fetch published blogs dynamically:", err);
-        if (mounted && blogs.length === 0) {
+        if (mounted && !hasBlogFilters && blogs.length === 0) {
           setBlogs(latestBlogs.map(cleanBlogPost));
         }
       })
@@ -372,7 +369,7 @@ function App() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [blogFilters.category, blogFilters.domain, blogFilters.search]);
 
   useEffect(() => {
     let mounted = true;
@@ -428,7 +425,7 @@ function App() {
     if (!nextCursor || isLoadingMore) return;
     setIsLoadingMore(true);
     try {
-      const res = await fetchPublishedBlogs(nextCursor, 10);
+      const res = await fetchPublishedBlogs(nextCursor, 10, blogFilters);
       setBlogs((prev) => {
         const existingSlugs = new Set(prev.map((p) => p.slug));
         const newPosts = res.posts.filter((p) => !existingSlugs.has(p.slug));
@@ -441,6 +438,13 @@ function App() {
     } finally {
       setIsLoadingMore(false);
     }
+  };
+
+  const handleBlogFiltersChange = (filters: BlogQueryFilters) => {
+    setBlogs([]);
+    setNextCursor(null);
+    setHasMore(false);
+    setBlogFilters(filters);
   };
 
   const handleLoadMoreQuestions = async () => {
@@ -502,6 +506,8 @@ function App() {
             hasMore={hasMore}
             isLoadingMore={isLoadingMore}
             onLoadMore={handleLoadMore}
+            blogFilters={blogFilters}
+            onBlogFiltersChange={handleBlogFiltersChange}
             questions={questions}
             isLoadingQuestions={isLoadingQuestions}
             hasMoreQuestions={hasMoreQuestions}

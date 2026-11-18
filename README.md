@@ -59,6 +59,7 @@ Required Netlify function variables:
 ```bash
 NOTION_TOKEN=secret_your_notion_integration_token
 NOTION_BLOG_DATABASE_ID=your_notion_blog_database_id
+NOTION_BLOG_TITLE_PROPERTY=Name
 NOTION_BLOG_SLUG_PROPERTY=Slug
 NOTION_BLOG_STATUS_PROPERTY=Status
 NOTION_BLOG_PUBLISHED_VALUE=Done
@@ -150,6 +151,8 @@ The interview index keeps filtering and pagination server-side. Topic filters us
 5. CORS allows requests only from `https://stepstodevopsandsre.github.io` and local development.
 
 No Notion secret is exposed in the browser or in the GitHub Pages deployment.
+
+The article index also supports server-side category, domain, and text search. The frontend requests ten matching articles at a time, and changing a filter starts a fresh Notion cursor so results from different filters cannot mix. The optional article filter property variables are `NOTION_BLOG_TAG_PROPERTY` (default `Tag`), `NOTION_BLOG_TAG_PROPERTY_TYPE` (default `select`), `NOTION_BLOG_DOMAIN_PROPERTY` (default `Domain`), `NOTION_BLOG_DOMAIN_PROPERTY_TYPE` (default `rich_text`), `NOTION_BLOG_SUMMARY_PROPERTY` (default `Summary`), and `NOTION_BLOG_SUMMARY_PROPERTY_TYPE` (default `rich_text`).
 
 ## How the Notion Interview Flow Works
 
