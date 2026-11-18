@@ -12,6 +12,7 @@ import { Hero } from "@/components/Hero";
 import { InterviewQuestionFilters } from "@/components/InterviewQuestionFilters";
 import { InterviewQuestionPage } from "@/components/InterviewQuestionPage";
 import { MotionReveal } from "@/components/MotionReveal";
+import { SelectionAskAiPopover } from "@/components/SelectionAskAiPopover";
 import {
   latestInterviewQuestions,
   latestBlogs,
@@ -492,6 +493,7 @@ function App() {
       <div className="pointer-events-none fixed inset-x-0 top-0 z-0 mx-auto h-[34rem] max-w-6xl bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.16),_transparent_50%),radial-gradient(circle_at_20%_15%,_rgba(251,113,133,0.16),_transparent_28%)] blur-3xl dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.14),_transparent_45%),radial-gradient(circle_at_20%_15%,_rgba(251,113,133,0.12),_transparent_24%)]" />
       <div className="relative z-10">
         <Header />
+        <SelectionAskAiPopover />
         {route.name === "blog" ? (
           <BlogArticlePage slug={route.slug} allPosts={blogs.length > 0 ? blogs : latestBlogs} />
         ) : route.name === "interviewQuestion" ? (
