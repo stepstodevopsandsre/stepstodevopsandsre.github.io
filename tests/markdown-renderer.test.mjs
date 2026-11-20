@@ -12,6 +12,8 @@ test("renderHighlightedCode creates a readable YAML code block", () => {
   assert.match(html, /code-block-shell/);
   assert.match(html, /code-block-language.*Yaml/);
   assert.match(html, /hljs-attr/);
+  assert.match(html, /data-code-copy/);
+  assert.match(html, />Copy<\/span>/);
 });
 
 test("sanitizing highlighted code preserves syntax spans and removes unsafe markup", () => {
@@ -22,5 +24,6 @@ test("sanitizing highlighted code preserves syntax spans and removes unsafe mark
 
   assert.match(html, /code-block-shell/);
   assert.match(html, /hljs-string/);
+  assert.match(html, /data-code-copy/);
   assert.equal(html.includes("<script>"), false);
 });

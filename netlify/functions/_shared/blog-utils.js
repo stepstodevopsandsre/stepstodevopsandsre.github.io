@@ -361,11 +361,19 @@ export const sanitizeArticleHtml = (html) =>
       "td",
       "pre",
       "code",
-      "span"
+      "span",
+      "button",
+      "svg",
+      "path",
+      "rect"
     ]),
     allowedAttributes: {
       a: ["href", "name", "target", "rel"],
       img: ["src", "alt", "title"],
+      button: ["type", "aria-label", "title", "data-code-copy"],
+      svg: ["viewBox", "fill", "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin", "aria-hidden"],
+      path: ["d"],
+      rect: ["x", "y", "width", "height", "rx"],
       "*": ["class"]
     },
     allowedSchemes: ["http", "https", "ftp", "mailto", "tel", "data"],

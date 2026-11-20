@@ -49,7 +49,7 @@ export const renderHighlightedCode = ({ text = "", lang = "" }) => {
       : hljs.highlightAuto(text).value;
   const className = language ? `hljs language-${language}` : "hljs";
 
-  return `<div class="code-block-shell"><div class="code-block-toolbar"><span class="code-block-language">${languageLabel(language)}</span><span class="code-block-hint">Syntax highlighted</span></div><pre><code class="${className}">${highlighted}</code></pre></div>`;
+  return `<div class="code-block-shell"><div class="code-block-toolbar"><span class="code-block-language">${languageLabel(language)}</span><button type="button" class="code-block-copy" data-code-copy aria-label="Copy code" title="Copy code"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Copy</span></button></div><pre><code class="${className}">${highlighted}</code></pre></div>`;
 };
 
 export const highlightedCodeRenderer = {
