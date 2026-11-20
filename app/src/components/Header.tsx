@@ -22,9 +22,11 @@ export const Header = ({ compactOnScroll = true }: HeaderProps) => {
         const progress = scrollableHeight > 0 ? (window.scrollY / scrollableHeight) * 100 : 0;
         setScrollProgress(Math.min(100, Math.max(0, progress)));
 
+        const compactViewport = window.matchMedia("(min-width: 1024px)").matches;
+
         // Hysteresis keeps the header from flickering around the transition point.
         setIsCompact((current) => {
-          if (!compactOnScroll) return false;
+          if (!compactOnScroll || !compactViewport) return false;
           if (current && window.scrollY < 16) return false;
           if (!current && window.scrollY > 72) return true;
           return current;

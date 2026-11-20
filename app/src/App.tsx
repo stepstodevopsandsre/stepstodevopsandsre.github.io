@@ -32,7 +32,7 @@ import type { BlogFilters as BlogQueryFilters, InterviewQuestionFilters as Inter
 import type { BlogPost, InterviewQuestion } from "@/types";
 
 const cardClassName =
-  "flex h-[18rem] flex-col overflow-hidden rounded-[1.5rem] border border-border/70 bg-surface/75 p-5 shadow-panel backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-accent/35 hover:bg-elevated";
+  "flex h-auto min-h-[18rem] flex-col overflow-hidden rounded-[1.5rem] border border-border/70 bg-surface/75 p-5 shadow-panel backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-accent/35 hover:bg-elevated lg:h-[18rem]";
 
 interface HomePageProps {
   posts: BlogPost[];
