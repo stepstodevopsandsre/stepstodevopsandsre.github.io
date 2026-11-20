@@ -59,11 +59,11 @@ export const ShareButton = ({ href, title }: ShareButtonProps) => {
     <button
       type="button"
       onClick={handleShare}
-      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border/70 bg-surface/80 text-muted transition hover:border-accent/35 hover:bg-accentSoft hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
+      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border/70 bg-surface/80 text-muted transition hover:border-accent/35 hover:bg-accentSoft hover:text-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
       aria-label={shared ? `Link copied for ${title}` : `Share ${title}`}
       title={shared ? "Link copied" : "Share"}
     >
-      {shared ? <Check size={16} className="text-success" /> : <Share2 size={16} />}
+      {shared ? <Check size={14} className="text-success" /> : <Share2 size={14} />}
     </button>
   );
 };
