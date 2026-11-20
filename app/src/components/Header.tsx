@@ -3,7 +3,11 @@ import { type CSSProperties, useEffect, useState } from "react";
 import { navigation, site } from "@/data/siteContent";
 import { ThemeToggle } from "./ThemeToggle";
 
-export const Header = () => {
+type HeaderProps = {
+  compactOnScroll?: boolean;
+};
+
+export const Header = ({ compactOnScroll = true }: HeaderProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isCompact, setIsCompact] = useState(false);
@@ -20,6 +24,7 @@ export const Header = () => {
 
         // Hysteresis keeps the header from flickering around the transition point.
         setIsCompact((current) => {
+          if (!compactOnScroll) return false;
           if (current && window.scrollY < 16) return false;
           if (!current && window.scrollY > 72) return true;
           return current;
@@ -36,7 +41,7 @@ export const Header = () => {
       window.removeEventListener("scroll", updateScrollProgress);
       window.removeEventListener("resize", updateScrollProgress);
     };
-  }, []);
+  }, [compactOnScroll]);
 
   const progressStyle = {
     "--scroll-progress": `${scrollProgress}%`

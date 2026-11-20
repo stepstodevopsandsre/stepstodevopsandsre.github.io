@@ -91,21 +91,39 @@ export const InterviewQuestionPage = ({ slug, allQuestions }: InterviewQuestionP
   const companies = state.status === "success" ? state.article.companies : fallback?.companies ?? [];
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-      <MotionReveal>
-        <a
-          href="#interview-questions"
-          className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-surface/70 px-4 py-2.5 text-sm font-medium text-muted transition hover:border-accent/30 hover:text-text"
-        >
-          <ArrowLeft size={16} />
-          Back to questions
-        </a>
-      </MotionReveal>
+    <main className="mx-auto max-w-[88rem] px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[180px_1fr_240px] xl:grid-cols-[200px_1fr_260px]">
+        <aside className="hidden lg:block">
+          <div className="sticky top-24">
+            <MotionReveal>
+              <a
+                href="#interview-questions"
+                className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-surface/70 px-4 py-2.5 text-sm font-medium text-muted transition hover:border-accent/30 hover:text-text"
+              >
+                <ArrowLeft size={16} />
+                Back to questions
+              </a>
+            </MotionReveal>
+          </div>
+        </aside>
 
-      <MotionReveal
-        className="mt-8 rounded-[2rem] border border-border/70 bg-surface/80 p-6 shadow-panel backdrop-blur sm:p-8"
-        delay={0.05}
-      >
+        <div className="min-w-0 max-w-4xl mx-auto w-full">
+          <div className="mb-6 lg:hidden">
+            <MotionReveal>
+              <a
+                href="#interview-questions"
+                className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-surface/70 px-4 py-2.5 text-sm font-medium text-muted transition hover:border-accent/30 hover:text-text"
+              >
+                <ArrowLeft size={16} />
+                Back to questions
+              </a>
+            </MotionReveal>
+          </div>
+
+          <MotionReveal
+            className="rounded-[2rem] border border-border/70 bg-surface/80 p-6 shadow-panel backdrop-blur sm:p-8"
+            delay={0.05}
+          >
         <div className="flex flex-wrap items-center gap-3 text-sm text-muted">
           {domain && (
             <span className="rounded-full border border-accent/20 bg-accentSoft px-3 py-1 font-semibold uppercase tracking-[0.18em] text-accent">
@@ -144,9 +162,9 @@ export const InterviewQuestionPage = ({ slug, allQuestions }: InterviewQuestionP
             ))}
           </div>
         )}
-      </MotionReveal>
+          </MotionReveal>
 
-      {state.status === "loading" && (
+          {state.status === "loading" && (
         <div className="mt-8 flex min-h-[18rem] items-center justify-center rounded-[2rem] border border-border/70 bg-surface/75 p-8 shadow-panel">
           <div className="flex items-center gap-3 text-muted">
             <LoaderCircle className="animate-spin" size={20} />
@@ -155,7 +173,7 @@ export const InterviewQuestionPage = ({ slug, allQuestions }: InterviewQuestionP
         </div>
       )}
 
-      {state.status === "error" && (
+          {state.status === "error" && (
         <div className="mt-8 rounded-[2rem] border border-rose-500/20 bg-rose-500/10 p-8 shadow-panel">
           <div className="flex items-start gap-3">
             <AlertCircle className="mt-0.5 text-rose-500" size={18} />
@@ -167,7 +185,7 @@ export const InterviewQuestionPage = ({ slug, allQuestions }: InterviewQuestionP
         </div>
       )}
 
-      {state.status === "success" && (
+          {state.status === "success" && (
         <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -179,7 +197,10 @@ export const InterviewQuestionPage = ({ slug, allQuestions }: InterviewQuestionP
             dangerouslySetInnerHTML={{ __html: state.article.html }}
           />
         </motion.section>
-      )}
+          )}
+        </div>
+        <aside className="hidden lg:block" aria-hidden="true" />
+      </div>
     </main>
   );
 };
