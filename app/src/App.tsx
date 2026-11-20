@@ -13,6 +13,7 @@ import { InterviewQuestionFilters } from "@/components/InterviewQuestionFilters"
 import { InterviewQuestionPage } from "@/components/InterviewQuestionPage";
 import { MotionReveal } from "@/components/MotionReveal";
 import { SelectionAskAiPopover } from "@/components/SelectionAskAiPopover";
+import { ShareButton } from "@/components/ShareButton";
 import {
   latestInterviewQuestions,
   latestBlogs,
@@ -151,16 +152,19 @@ const HomePage = ({
                   <a href={getBlogHref(post.slug)} className="text-sm font-semibold text-accent transition hover:text-text">
                     Read article
                   </a>
-                  <button
-                    type="button"
-                    onClick={() => setPreviewPost(post)}
-                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted transition hover:text-accent"
-                    aria-label={`Preview ${post.title}`}
-                    title="Preview article"
-                  >
-                    <Eye size={16} />
-                    Preview
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewPost(post)}
+                      className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted transition hover:text-accent"
+                      aria-label={`Preview ${post.title}`}
+                      title="Preview article"
+                    >
+                      <Eye size={16} />
+                      Preview
+                    </button>
+                    <ShareButton href={getBlogHref(post.slug)} title={post.title} />
+                  </div>
                 </div>
               </article>
             </MotionReveal>
@@ -249,9 +253,12 @@ const HomePage = ({
                     ))}
                   </div>
                 )}
-                <a href={getInterviewQuestionHref(question.slug)} className="mt-auto inline-flex pt-5 text-sm font-semibold text-accent">
-                  View answer
-                </a>
+                <div className="mt-auto flex items-center justify-between gap-4 pt-5">
+                  <a href={getInterviewQuestionHref(question.slug)} className="inline-flex text-sm font-semibold text-accent">
+                    View answer
+                  </a>
+                  <ShareButton href={getInterviewQuestionHref(question.slug)} title={question.question} />
+                </div>
               </article>
             </MotionReveal>
           ))
