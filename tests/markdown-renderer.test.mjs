@@ -27,3 +27,24 @@ test("sanitizing highlighted code preserves syntax spans and removes unsafe mark
   assert.match(html, /data-code-copy/);
   assert.equal(html.includes("<script>"), false);
 });
+
+test("infers Terraform commands that Notion labels as JavaScript", () => {
+  const html = renderHighlightedCode({
+    lang: "javascript",
+    text: "terraform plan -refresh-only\nterraform apply -refresh-only"
+  });
+
+  assert.match(html, /code-block-language">COMMAND/);
+  assert.match(html, /language-command/);
+  assert.doesNotMatch(html, /language-javascript/);
+});
+
+test("highlights important Terraform lifecycle arguments", () => {
+  const html = renderHighlightedCode({
+    lang: "hcl",
+    text: "lifecycle {\n  ignore_changes = [\n    desired_capacity\n  ]\n}"
+  });
+
+  assert.match(html, /hljs-keyword">lifecycle/);
+  assert.match(html, /hljs-keyword">ignore_changes/);
+});
