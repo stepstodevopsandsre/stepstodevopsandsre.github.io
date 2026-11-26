@@ -408,6 +408,16 @@ body {
     width: min(18rem, calc(100vw - 1.5rem));
   }
 
+  .sr-companion__tray > .mt-4.flex {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    row-gap: 0.2rem;
+  }
+
+  .sr-companion__tray > .mt-4.flex .sr-companion__quiet-action {
+    flex: 0 0 auto;
+  }
+
   .sr-companion__restore {
     width: 2rem;
     height: 2rem;
