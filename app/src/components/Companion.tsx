@@ -13,6 +13,7 @@ import {
 } from "@/lib/learningProfile";
 import { getRecommendation } from "@/lib/recommendations";
 import type { AppRoute } from "@/lib/routes";
+import { Mascot } from "./Mascot";
 
 type CompanionProps = { route: AppRoute; blogs: BlogPost[]; questions: InterviewQuestion[] };
 type CompanionMood = "idle" | "welcome" | "focused" | "success" | "encouraging";
@@ -48,6 +49,12 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
     setMood(isReturning ? "welcome" : "focused");
     lastProgress.current = 0;
   }, [content]);
+
+  useEffect(() => {
+    if (mood === "idle" || mood === "focused") return;
+    const timer = window.setTimeout(() => setMood(content ? "focused" : "idle"), 2800);
+    return () => window.clearTimeout(timer);
+  }, [mood, content]);
 
   useEffect(() => {
     const handleCodeCopied = () => {
@@ -149,7 +156,7 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
         </section>
       )}
       <button type="button" className={`sr-companion__button ${mood === "success" ? "sr-companion__button--success" : ""}`} onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label={open ? "Minimise learning companion" : "Open learning companion"}>
-        <img src="/mascot-adaptive-light-dark.svg" alt="" aria-hidden="true" />
+        <Mascot mood={mood} />
         {content && <span className="sr-companion__progress" aria-hidden="true" />}
       </button>
     </div>

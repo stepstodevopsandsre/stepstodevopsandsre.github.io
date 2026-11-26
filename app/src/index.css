@@ -132,6 +132,112 @@ body {
   object-fit: contain;
 }
 
+.sr-mascot {
+  width: 3.15rem;
+  height: 3.15rem;
+  overflow: visible;
+}
+
+.sr-mascot__body { fill: #6fa39a; }
+.sr-mascot__face { fill: #fffbf2; stroke: #4f847b; stroke-width: 2.5; stroke-opacity: 0.3; }
+.sr-mascot__arm { fill: #6fa39a; transform-box: fill-box; transform-origin: center; }
+.sr-mascot__foot { fill: #5e9188; }
+.sr-mascot__shadow { fill: #2f4a4f; opacity: 0.15; }
+.sr-mascot__halo { fill: none; stroke: #f2c879; stroke-width: 7; transform-box: fill-box; transform-origin: center; }
+.sr-mascot__spark { fill: #f2c879; }
+.sr-mascot__blush { fill: #f4b5a4; opacity: 0.6; }
+.sr-mascot__mouth { fill: #b5655f; stroke: #2f4a4f; stroke-width: 2; stroke-linejoin: round; }
+.sr-mascot__smile { display: none; fill: #f4a59a; }
+.sr-mascot__badge { fill: #fffbf2; font: 700 9px Arial, sans-serif; opacity: 0.75; }
+
+.sr-mascot--idle .sr-mascot__eyes,
+.sr-mascot--focused .sr-mascot__eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: sr-mascot-blink 5.2s ease-in-out infinite;
+}
+
+.sr-mascot--idle .sr-mascot__body,
+.sr-mascot--idle .sr-mascot__face {
+  animation: sr-mascot-breathe 4.8s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center bottom;
+}
+
+.sr-mascot--welcome .sr-mascot__arm--right {
+  animation: sr-mascot-wave 850ms ease-in-out 2;
+  transform-box: fill-box;
+  transform-origin: center bottom;
+}
+
+.sr-mascot--welcome .sr-mascot__smile,
+.sr-mascot--success .sr-mascot__smile,
+.sr-mascot--encouraging .sr-mascot__smile {
+  display: block;
+}
+
+.sr-mascot--welcome .sr-mascot__mouth,
+.sr-mascot--success .sr-mascot__mouth,
+.sr-mascot--encouraging .sr-mascot__mouth {
+  display: none;
+}
+
+.sr-mascot--focused .sr-mascot__eyes {
+  transform: translateY(5px) scaleY(0.72);
+  animation-duration: 6.5s;
+}
+
+.sr-mascot--focused .sr-mascot__halo {
+  opacity: 0.7;
+}
+
+.sr-mascot--encouraging .sr-mascot__halo {
+  animation: sr-mascot-halo 1.2s ease-in-out 2;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.sr-mascot--success .sr-mascot__arm--left,
+.sr-mascot--success .sr-mascot__arm--right {
+  animation: sr-mascot-celebrate 700ms ease-out 2 alternate;
+  transform-box: fill-box;
+  transform-origin: center bottom;
+}
+
+.sr-mascot--success .sr-mascot__spark {
+  animation: sr-mascot-spark 700ms ease-out 2 alternate;
+}
+
+@keyframes sr-mascot-blink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  94% { transform: scaleY(0.12); }
+}
+
+@keyframes sr-mascot-breathe {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1.5px); }
+}
+
+@keyframes sr-mascot-wave {
+  0%, 100% { transform: rotate(-15deg); }
+  50% { transform: rotate(-38deg) translateY(-2px); }
+}
+
+@keyframes sr-mascot-halo {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.12); opacity: 1; }
+}
+
+@keyframes sr-mascot-celebrate {
+  from { transform: rotate(0); }
+  to { transform: rotate(-28deg) translateY(-5px); }
+}
+
+@keyframes sr-mascot-spark {
+  from { opacity: 0.45; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1.35); }
+}
+
 .sr-companion__button--success {
   border-color: rgb(var(--color-success) / 0.6);
   box-shadow: 0 0 0 5px rgb(var(--color-success) / 0.12), 0 18px 44px -20px rgba(15, 23, 42, 0.62);
@@ -235,6 +341,11 @@ body {
   }
 
   .sr-companion__button img {
+    width: 2.65rem;
+    height: 2.65rem;
+  }
+
+  .sr-mascot {
     width: 2.65rem;
     height: 2.65rem;
   }
