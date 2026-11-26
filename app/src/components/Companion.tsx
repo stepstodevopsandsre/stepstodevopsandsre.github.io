@@ -84,7 +84,24 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
     };
   }, [content]);
 
-  if (!profile.companionEnabled) return null;
+  if (!profile.companionEnabled) {
+    return (
+      <div className="sr-companion sr-companion--hidden-state">
+        <button
+          type="button"
+          className="sr-companion__restore"
+          onClick={() => {
+            setCompanionEnabled(true);
+            setProfile(readLearningProfile());
+          }}
+          aria-label="Show learning companion"
+          title="Show learning companion"
+        >
+          <Sparkles size={15} aria-hidden="true" />
+        </button>
+      </div>
+    );
+  }
 
   const handleHide = () => {
     setCompanionEnabled(false);
