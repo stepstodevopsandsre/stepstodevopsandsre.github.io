@@ -232,10 +232,20 @@ const RelatedPostsStrip = ({
 
 export const BlogArticlePage = ({ slug, allPosts }: BlogArticlePageProps) => {
   const [state, setState] = useState<LoadState>({ status: "loading" });
+  const [retryNonce, setRetryNonce] = useState(0);
   const [toc, setToc] = useState<TocEntry[]>([]);
   const [processedHtml, setProcessedHtml] = useState("");
   const allKnown = [...allPosts, ...latestBlogs];
   const fallback = allKnown.find((post) => post.slug === slug);
+
+  useEffect(() => {
+    const handleRetry = (event: Event) => {
+      const detail = (event as CustomEvent<{ type?: string; slug?: string }>).detail;
+      if (detail?.type === "blog" && detail.slug === slug) setRetryNonce((value) => value + 1);
+    };
+    window.addEventListener("sr:content-retry", handleRetry);
+    return () => window.removeEventListener("sr:content-retry", handleRetry);
+  }, [slug]);
 
   useEffect(() => {
     let cancelled = false;
@@ -254,11 +264,14 @@ export const BlogArticlePage = ({ slug, allPosts }: BlogArticlePageProps) => {
         }
       })
       .catch((error: Error) => {
-        if (!cancelled) setState({ status: "error", message: error.message });
+        if (!cancelled) {
+          setState({ status: "error", message: error.message });
+          window.dispatchEvent(new CustomEvent("sr:content-error", { detail: { type: "blog", slug } }));
+        }
       });
 
     return () => { cancelled = true; };
-  }, [slug]);
+  }, [slug, retryNonce]);
 
   // Mermaid — init + lightbox on double-click
   useEffect(() => {

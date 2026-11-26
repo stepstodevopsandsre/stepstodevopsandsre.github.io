@@ -27,8 +27,18 @@ const formatDate = (value?: string) => {
 
 export const InterviewQuestionPage = ({ slug, allQuestions }: InterviewQuestionPageProps) => {
   const [state, setState] = useState<LoadState>({ status: "loading" });
+  const [retryNonce, setRetryNonce] = useState(0);
   const allKnown = [...allQuestions, ...latestInterviewQuestions];
   const fallback = allKnown.find((question) => question.slug === slug);
+
+  useEffect(() => {
+    const handleRetry = (event: Event) => {
+      const detail = (event as CustomEvent<{ type?: string; slug?: string }>).detail;
+      if (detail?.type === "interview" && detail.slug === slug) setRetryNonce((value) => value + 1);
+    };
+    window.addEventListener("sr:content-retry", handleRetry);
+    return () => window.removeEventListener("sr:content-retry", handleRetry);
+  }, [slug]);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,13 +51,16 @@ export const InterviewQuestionPage = ({ slug, allQuestions }: InterviewQuestionP
         }
       })
       .catch((error: Error) => {
-        if (!cancelled) setState({ status: "error", message: error.message });
+        if (!cancelled) {
+          setState({ status: "error", message: error.message });
+          window.dispatchEvent(new CustomEvent("sr:content-error", { detail: { type: "interview", slug } }));
+        }
       });
 
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [slug, retryNonce]);
 
   useEffect(() => {
     if (state.status !== "success") return;

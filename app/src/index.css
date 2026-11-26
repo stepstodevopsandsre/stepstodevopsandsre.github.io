@@ -148,6 +148,7 @@ body {
 .sr-mascot__blush { fill: #f4b5a4; opacity: 0.6; }
 .sr-mascot__mouth { fill: #b5655f; stroke: #2f4a4f; stroke-width: 2; stroke-linejoin: round; }
 .sr-mascot__smile { display: none; fill: #f4a59a; }
+.sr-mascot__concern { display: none; fill: none; stroke: #b5655f; stroke-width: 3; stroke-linecap: round; }
 .sr-mascot__badge { fill: #fffbf2; font: 700 9px Arial, sans-serif; opacity: 0.75; }
 
 .sr-mascot--idle .sr-mascot__eyes,
@@ -172,14 +173,56 @@ body {
 
 .sr-mascot--welcome .sr-mascot__smile,
 .sr-mascot--success .sr-mascot__smile,
+.sr-mascot--completed .sr-mascot__smile,
 .sr-mascot--encouraging .sr-mascot__smile {
   display: block;
 }
 
 .sr-mascot--welcome .sr-mascot__mouth,
 .sr-mascot--success .sr-mascot__mouth,
+.sr-mascot--completed .sr-mascot__mouth,
 .sr-mascot--encouraging .sr-mascot__mouth {
   display: none;
+}
+
+.sr-mascot--error .sr-mascot__face { fill: #fff4ed; stroke: #e07a82; }
+.sr-mascot--error .sr-mascot__halo { stroke: #e07a82; opacity: 0.9; }
+.sr-mascot--error .sr-mascot__mouth { display: none; }
+.sr-mascot--error .sr-mascot__concern { display: block; }
+.sr-mascot--error .sr-mascot__eyes { transform: translateY(2px); }
+
+.sr-companion__tray--error {
+  border-color: rgb(224 122 130 / 0.38);
+  background: linear-gradient(145deg, rgb(255 244 237 / 0.98), rgb(var(--color-surface) / 0.96));
+}
+
+.dark .sr-companion__tray--error {
+  background: linear-gradient(145deg, rgb(75 39 45 / 0.9), rgb(var(--color-surface) / 0.96));
+}
+
+.sr-companion__error-state {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 0.8rem;
+}
+
+.sr-companion__error-icon {
+  display: inline-flex;
+  width: 2.25rem;
+  height: 2.25rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.8rem;
+  background: rgb(224 122 130 / 0.16);
+  color: #b5655f;
+}
+
+.sr-companion__error-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 0.9rem;
 }
 
 .sr-mascot--focused .sr-mascot__eyes {
@@ -198,7 +241,9 @@ body {
 }
 
 .sr-mascot--success .sr-mascot__arm--left,
-.sr-mascot--success .sr-mascot__arm--right {
+.sr-mascot--success .sr-mascot__arm--right,
+.sr-mascot--completed .sr-mascot__arm--left,
+.sr-mascot--completed .sr-mascot__arm--right {
   animation: sr-mascot-celebrate 700ms ease-out 2 alternate;
   transform-box: fill-box;
   transform-origin: center bottom;

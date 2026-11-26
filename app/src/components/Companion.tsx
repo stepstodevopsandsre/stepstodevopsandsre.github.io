@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, ChevronDown, EyeOff, History, Sparkles, X } from "lucide-react";
+import { AlertTriangle, ArrowRight, BookOpen, ChevronDown, EyeOff, History, RotateCcw, Sparkles, X } from "lucide-react";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import type { BlogPost, InterviewQuestion } from "@/types";
 import {
@@ -18,7 +18,7 @@ import type { AppRoute } from "@/lib/routes";
 import { Mascot } from "./Mascot";
 
 type CompanionProps = { route: AppRoute; blogs: BlogPost[]; questions: InterviewQuestion[] };
-type CompanionMood = "idle" | "welcome" | "focused" | "success" | "encouraging";
+type CompanionMood = "idle" | "welcome" | "focused" | "success" | "completed" | "encouraging" | "error";
 
 const getContent = (route: AppRoute, blogs: BlogPost[], questions: InterviewQuestion[]): LearningContent | undefined => {
   if (route.name === "home") return undefined;
@@ -37,6 +37,7 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
   const [profile, setProfile] = useState<LearningProfile>(() => readLearningProfile());
   const [open, setOpen] = useState(false);
   const [mood, setMood] = useState<CompanionMood>("idle");
+  const [errorType, setErrorType] = useState<LearningContent["type"] | null>(null);
   const [isScrolling, setIsScrolling] = useState(false);
   const [progress, setProgress] = useState(0);
   const lastProgress = useRef(0);
@@ -55,14 +56,39 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
     recordContentOpened(content);
     setProfile(readLearningProfile());
     setMood(isReturning ? "welcome" : "focused");
+    setErrorType(null);
     const previous = readLearningProfile().reads.find((item) => item.slug === content.slug && item.type === content.type);
     const previousProgress = previous?.progress ?? 0;
     lastProgress.current = Math.floor(previousProgress / 25) * 25;
-    setProgress(previousProgress);
+    setProgress(previousProgress >= 90 ? 100 : previousProgress);
+  }, [content]);
+
+  useEffect(() => {
+    const handleContentError = (event: Event) => {
+      const detail = (event as CustomEvent<{ type?: LearningContent["type"]; slug?: string }>).detail;
+      if (!content || detail?.slug !== content.slug) return;
+      setErrorType(detail.type ?? content.type);
+      setMood("error");
+      setOpen(false);
+    };
+    window.addEventListener("sr:content-error", handleContentError);
+    return () => window.removeEventListener("sr:content-error", handleContentError);
+  }, [content]);
+
+  useEffect(() => {
+    const handleContentRetry = (event: Event) => {
+      const detail = (event as CustomEvent<{ type?: LearningContent["type"]; slug?: string }>).detail;
+      if (!content || detail?.slug !== content.slug) return;
+      setErrorType(null);
+      setMood("focused");
+    };
+    window.addEventListener("sr:content-retry", handleContentRetry);
+    return () => window.removeEventListener("sr:content-retry", handleContentRetry);
   }, [content]);
 
   useEffect(() => {
     if (mood === "idle" || mood === "focused") return;
+    if (mood === "error") return;
     const timer = window.setTimeout(() => setMood(content ? "focused" : "idle"), 2800);
     return () => window.clearTimeout(timer);
   }, [mood, content]);
@@ -88,14 +114,15 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
       if (height <= 0) return;
       const progress = Math.min(100, Math.max(0, (window.scrollY / height) * 100));
       window.cancelAnimationFrame(progressFrame.current);
-      progressFrame.current = window.requestAnimationFrame(() => setProgress(Math.round(progress)));
+      progressFrame.current = window.requestAnimationFrame(() => setProgress(progress >= 90 ? 100 : Math.round(progress)));
       const milestone = Math.floor(progress / 25) * 25;
       if (milestone > lastProgress.current && milestone > 0) {
         lastProgress.current = milestone;
         setProgress(Math.round(progress));
         recordReadingProgress(content, progress);
         setProfile(readLearningProfile());
-        if (milestone >= 50) setMood("encouraging");
+        if (milestone >= 90) setMood("completed");
+        else if (milestone >= 50) setMood("encouraging");
       }
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -131,7 +158,11 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
     setOpen(false);
   };
 
-  const message = mood === "welcome"
+  const message = mood === "error"
+    ? "Could not load"
+    : mood === "completed"
+      ? "Completed"
+      : mood === "welcome"
     ? "Welcome back. Continue where you left off?"
     : mood === "success"
       ? "Nice. That code is copied and ready to use."
@@ -148,18 +179,35 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
   return (
     <div className={`sr-companion ${isScrolling ? "sr-companion--scrolling" : ""}`}>
       {open && (
-        <section className="sr-companion__tray" aria-label="Learning companion">
+        <section className={`sr-companion__tray ${mood === "error" ? "sr-companion__tray--error" : ""}`} aria-label="Learning companion" aria-live="polite">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-accent"><Sparkles size={14} aria-hidden="true" /> Learning companion</div>
             <button type="button" className="sr-companion__icon-button" onClick={() => setOpen(false)} aria-label="Close companion"><X size={16} /></button>
           </div>
-          <p className="mt-4 text-sm font-semibold leading-6 text-text">{message}</p>
+          {mood === "error" ? (
+            <div className="sr-companion__error-state" role="alert">
+              <div className="sr-companion__error-icon"><AlertTriangle size={18} aria-hidden="true" /></div>
+              <div>
+                <p className="text-sm font-semibold text-text">Could not load</p>
+                <span className="sr-only">This page did not load. Retry or return to the list.</span>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-4 text-sm font-semibold leading-6 text-text">{message}</p>
+          )}
           {(profile.counts.articlesOpened > 0 || profile.counts.questionsOpened > 0) && (
             <p className="mt-2 text-xs leading-5 text-muted">
               {profile.counts.articlesOpened} articles · {profile.counts.questionsOpened} questions explored
             </p>
           )}
-          {mood === "welcome" && lastRead ? (
+          {mood === "error" ? (
+            <div className="sr-companion__error-actions">
+              <button type="button" className="sr-companion__action" onClick={() => {
+                window.dispatchEvent(new CustomEvent("sr:content-retry", { detail: { type: errorType, slug: content?.slug } }));
+              }}><RotateCcw size={15} aria-hidden="true" /> Retry</button>
+              <a className="sr-companion__quiet-action" href={errorType === "interview" ? "#interview-questions" : "#blogs"} onClick={() => setOpen(false)}>Back to list</a>
+            </div>
+          ) : mood === "welcome" && lastRead ? (
             <a className="sr-companion__action" href={lastRead.href} onClick={() => setOpen(false)}><BookOpen size={15} aria-hidden="true" /> Continue reading <ArrowRight size={15} aria-hidden="true" /></a>
           ) : recommendation ? (
             <a className="sr-companion__action" href={recommendation.href} onClick={() => setOpen(false)}>Explore suggestion <ArrowRight size={15} aria-hidden="true" /></a>

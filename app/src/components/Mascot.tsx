@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-type MascotMood = "idle" | "welcome" | "focused" | "success" | "encouraging";
+type MascotMood = "idle" | "welcome" | "focused" | "success" | "completed" | "encouraging" | "error";
 
 type MascotProps = {
   mood: MascotMood;
@@ -45,6 +45,7 @@ export const Mascot = ({ mood, progress = 0 }: MascotProps) => (
     <ellipse className="sr-mascot__blush" cx="135" cy="125" rx="8" ry="5.5" />
     <path className="sr-mascot__mouth" d="M90 122 Q100 136 110 122" />
     <path className="sr-mascot__smile" d="M91 124 Q100 138 109 124 Q100 130 91 124Z" />
+    <path className="sr-mascot__concern" d="M91 134 Q100 125 109 134" />
     <text className="sr-mascot__badge" x="100" y="262" textAnchor="middle">SR</text>
   </svg>
 );
