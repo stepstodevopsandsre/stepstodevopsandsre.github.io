@@ -53,7 +53,13 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
   const isReturning = Date.now() - new Date(profile.lastActiveAt).getTime() > 24 * 60 * 60 * 1000;
 
   useEffect(() => {
-    if (!content) return;
+    if (!content) {
+      setMood("idle");
+      setErrorType(null);
+      setProgress(0);
+      lastProgress.current = 0;
+      return;
+    }
     recordContentOpened(content);
     setProfile(readLearningProfile());
     setMood(isReturning ? "welcome" : "focused");
