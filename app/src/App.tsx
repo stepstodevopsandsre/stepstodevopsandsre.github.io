@@ -5,6 +5,7 @@ import { BlogArticlePage } from "@/components/BlogArticlePage";
 import { BlogPreviewModal } from "@/components/BlogPreviewModal";
 import { BlogFilters } from "@/components/BlogFilters";
 import { CodeBlockCopyEnhancer } from "@/components/CodeBlockCopyEnhancer";
+import { Companion } from "@/components/Companion";
 import { ContentGrid } from "@/components/ContentGrid";
 import { FeaturedCategories } from "@/components/FeaturedCategories";
 import { Footer } from "@/components/Footer";
@@ -528,6 +529,11 @@ function App() {
           onQuestionFiltersChange={handleQuestionFiltersChange}
           />
         )}
+        <Companion
+          route={route}
+          blogs={[...blogs, ...latestBlogs].filter((post, index, items) => items.findIndex((item) => item.slug === post.slug) === index)}
+          questions={[...questions, ...latestInterviewQuestions].filter((question, index, items) => items.findIndex((item) => item.slug === question.slug) === index)}
+        />
         <Footer />
       </div>
     </div>

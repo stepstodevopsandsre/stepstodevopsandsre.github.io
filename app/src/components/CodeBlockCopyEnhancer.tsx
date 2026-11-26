@@ -35,6 +35,7 @@ export const CodeBlockCopyEnhancer = () => {
       try {
         await copyText(code);
         target.dataset.copyState = "copied";
+        window.dispatchEvent(new CustomEvent("sr:code-copied"));
         target.setAttribute("aria-label", "Code copied");
         target.title = "Copied";
         target.innerHTML = `${checkIcon}<span>Copied!</span>`;

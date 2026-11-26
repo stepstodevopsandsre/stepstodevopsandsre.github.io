@@ -57,6 +57,180 @@ body {
   min-height: 100vh;
 }
 
+/* Context-aware learning companion. It never participates in document layout. */
+.sr-companion {
+  position: fixed;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.65rem;
+  pointer-events: none;
+}
+
+.sr-companion__button,
+.sr-companion__tray {
+  pointer-events: auto;
+}
+
+.sr-companion__button {
+  position: relative;
+  display: inline-flex;
+  width: 3.5rem;
+  height: 3.5rem;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid rgb(var(--color-border) / 0.85);
+  border-radius: 1.25rem;
+  background: rgb(var(--color-surface) / 0.94);
+  box-shadow: 0 18px 44px -20px rgba(15, 23, 42, 0.62), 0 0 0 3px rgb(var(--color-accent) / 0.08);
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+}
+
+.sr-companion__button:hover,
+.sr-companion__button:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgb(var(--color-accent) / 0.5);
+  box-shadow: 0 22px 50px -22px rgba(15, 23, 42, 0.7), 0 0 0 4px rgb(var(--color-accent) / 0.12);
+  outline: none;
+}
+
+.sr-companion__button img {
+  width: 3.15rem;
+  height: 3.15rem;
+  object-fit: contain;
+}
+
+.sr-companion__button--success {
+  border-color: rgb(var(--color-success) / 0.6);
+  box-shadow: 0 0 0 5px rgb(var(--color-success) / 0.12), 0 18px 44px -20px rgba(15, 23, 42, 0.62);
+}
+
+.sr-companion__progress {
+  position: absolute;
+  inset: 0.22rem;
+  border: 2px solid rgb(var(--color-accent) / 0.46);
+  border-radius: 1.05rem;
+  pointer-events: none;
+}
+
+.sr-companion__tray {
+  width: min(19rem, calc(100vw - 2rem));
+  padding: 1rem;
+  border: 1px solid rgb(var(--color-border) / 0.78);
+  border-radius: 1.25rem;
+  background: rgb(var(--color-surface) / 0.96);
+  box-shadow: 0 28px 70px -28px rgba(15, 23, 42, 0.62);
+  backdrop-filter: blur(18px);
+  animation: sr-companion-enter 220ms ease-out both;
+}
+
+.sr-companion__icon-button,
+.sr-companion__quiet-action,
+.sr-companion__action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  gap: 0.4rem;
+  border-radius: 0.7rem;
+  transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.sr-companion__icon-button {
+  width: 2.5rem;
+  justify-content: center;
+  color: rgb(var(--color-muted));
+}
+
+.sr-companion__icon-button:hover,
+.sr-companion__icon-button:focus-visible,
+.sr-companion__quiet-action:hover,
+.sr-companion__quiet-action:focus-visible {
+  background: rgb(var(--color-accent) / 0.08);
+  color: rgb(var(--color-text));
+  outline: none;
+}
+
+.sr-companion__action {
+  width: 100%;
+  justify-content: space-between;
+  margin-top: 0.9rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgb(var(--color-accent) / 0.24);
+  background: rgb(var(--color-accent) / 0.08);
+  color: rgb(var(--color-accent));
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.sr-companion__action:hover,
+.sr-companion__action:focus-visible {
+  background: rgb(var(--color-accent) / 0.14);
+  outline: none;
+}
+
+.sr-companion__quiet-action {
+  padding: 0.25rem 0.35rem;
+  color: rgb(var(--color-muted));
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.sr-companion--scrolling .sr-companion__button {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(0.4rem) scale(0.88);
+}
+
+.sr-companion--scrolling {
+  pointer-events: none;
+}
+
+@keyframes sr-companion-enter {
+  from { opacity: 0; transform: translateY(0.4rem) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 640px) {
+  .sr-companion {
+    right: max(0.75rem, env(safe-area-inset-right));
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+
+  .sr-companion__button {
+    width: 2.9rem;
+    height: 2.9rem;
+    border-radius: 1rem;
+  }
+
+  .sr-companion__button img {
+    width: 2.65rem;
+    height: 2.65rem;
+  }
+
+  .sr-companion__progress {
+    inset: 0.18rem;
+    border-radius: 0.82rem;
+  }
+
+  .sr-companion__tray {
+    width: min(18rem, calc(100vw - 1.5rem));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sr-companion__tray,
+  .sr-companion__button,
+  .sr-companion__action,
+  .sr-companion__quiet-action {
+    animation: none;
+    transition: none;
+  }
+}
+
 ::selection {
   background: rgba(56, 189, 248, 0.25);
 }
