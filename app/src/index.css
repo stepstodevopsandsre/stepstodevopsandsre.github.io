@@ -136,6 +136,8 @@ body {
   width: 3.15rem;
   height: 3.15rem;
   overflow: visible;
+  transform: scale(var(--mascot-scale, 1));
+  transform-origin: center;
 }
 
 .sr-mascot__body { fill: #6fa39a; }
@@ -340,6 +342,50 @@ body {
 .sr-companion__progress-copy strong {
   color: rgb(var(--color-accent));
   font-variant-numeric: tabular-nums;
+}
+
+.sr-companion__size-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.8rem;
+  color: rgb(var(--color-muted));
+  font-size: 0.72rem;
+}
+
+.sr-companion__size-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: rgb(var(--color-text));
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-companion__size-button {
+  display: inline-flex;
+  width: 1.8rem;
+  height: 1.8rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(var(--color-border) / 0.78);
+  border-radius: 0.55rem;
+  background: rgb(var(--color-canvas) / 0.65);
+  color: rgb(var(--color-muted));
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.sr-companion__size-button:hover:not(:disabled),
+.sr-companion__size-button:focus-visible:not(:disabled) {
+  border-color: rgb(var(--color-accent) / 0.45);
+  background: rgb(var(--color-accent) / 0.1);
+  color: rgb(var(--color-accent));
+  outline: none;
+}
+
+.sr-companion__size-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
 }
 
 .continue-learning-card {

@@ -20,6 +20,7 @@ export type LearningProfile = {
   lastActiveAt: string;
   companionEnabled: boolean;
   personalisedSuggestionsEnabled: boolean;
+  mascotScale: number;
   reads: ReadRecord[];
   topicScores: Record<string, number>;
   counts: {
@@ -41,6 +42,7 @@ const createProfile = (): LearningProfile => ({
   lastActiveAt: now(),
   companionEnabled: true,
   personalisedSuggestionsEnabled: true,
+  mascotScale: 1,
   reads: [],
   topicScores: {},
   counts: {
@@ -61,6 +63,7 @@ const normaliseProfile = (value: unknown): LearningProfile => {
     ...candidate,
     companionEnabled: candidate.companionEnabled !== false,
     personalisedSuggestionsEnabled: candidate.personalisedSuggestionsEnabled !== false,
+    mascotScale: typeof candidate.mascotScale === "number" ? Math.min(1.2, Math.max(0.8, candidate.mascotScale)) : 1,
     reads: Array.isArray(candidate.reads) ? candidate.reads.slice(0, MAX_READS) : [],
     topicScores: candidate.topicScores && typeof candidate.topicScores === "object" ? candidate.topicScores : {},
     counts: { ...base.counts, ...(candidate.counts ?? {}) }
@@ -133,12 +136,17 @@ export const setPersonalisedSuggestionsEnabled = (enabled: boolean) => updateLea
   profile.personalisedSuggestionsEnabled = enabled;
 });
 
+export const setMascotScale = (scale: number) => updateLearningProfile((profile) => {
+  profile.mascotScale = Math.min(1.2, Math.max(0.8, Math.round(scale * 10) / 10));
+});
+
 export const clearLearningHistory = () => {
   const profile = createProfile();
   const existing = readLearningProfile();
   profile.profileId = existing.profileId;
   profile.companionEnabled = existing.companionEnabled;
   profile.personalisedSuggestionsEnabled = existing.personalisedSuggestionsEnabled;
+  profile.mascotScale = existing.mascotScale;
   writeLearningProfile(profile);
   return profile;
 };

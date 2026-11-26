@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowRight, BookOpen, ChevronDown, EyeOff, History, RotateCcw, Sparkles, X } from "lucide-react";
+import { AlertTriangle, ArrowRight, BookOpen, ChevronDown, EyeOff, History, Minus, Plus, RotateCcw, Sparkles, X } from "lucide-react";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import type { BlogPost, InterviewQuestion } from "@/types";
 import {
@@ -9,6 +9,7 @@ import {
   recordReadingProgress,
   clearLearningHistory,
   setPersonalisedSuggestionsEnabled,
+  setMascotScale,
   setCompanionEnabled,
   type LearningContent,
   type LearningProfile
@@ -219,6 +220,36 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
               <strong>{progress}%</strong>
             </div>
           )}
+          <div className="sr-companion__size-control">
+            <span>Mascot size</span>
+            <div className="sr-companion__size-actions">
+              <button
+                type="button"
+                className="sr-companion__size-button"
+                onClick={() => {
+                  setMascotScale(profile.mascotScale - 0.1);
+                  setProfile(readLearningProfile());
+                }}
+                disabled={profile.mascotScale <= 0.8}
+                aria-label="Make mascot smaller"
+              >
+                <Minus size={14} />
+              </button>
+              <span aria-live="polite">{Math.round(profile.mascotScale * 100)}%</span>
+              <button
+                type="button"
+                className="sr-companion__size-button"
+                onClick={() => {
+                  setMascotScale(profile.mascotScale + 0.1);
+                  setProfile(readLearningProfile());
+                }}
+                disabled={profile.mascotScale >= 1.2}
+                aria-label="Make mascot larger"
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+          </div>
           <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/60 pt-3">
             <button
               type="button"
@@ -249,7 +280,7 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
           </div>
         </section>
       )}
-      <button type="button" className={`sr-companion__button ${mood === "success" || mood === "completed" ? "sr-companion__button--success" : ""} ${mood === "error" ? "sr-companion__button--error" : ""}`} style={{ "--companion-progress": `${progress}%` } as CSSProperties} onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label={open ? "Minimise learning companion" : "Open learning companion"}>
+      <button type="button" className={`sr-companion__button ${mood === "success" || mood === "completed" ? "sr-companion__button--success" : ""} ${mood === "error" ? "sr-companion__button--error" : ""}`} style={{ "--companion-progress": `${progress}%`, "--mascot-scale": profile.mascotScale } as CSSProperties} onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label={open ? "Minimise learning companion" : "Open learning companion"}>
         <Mascot mood={mood} progress={progress} />
         {content && <span className="sr-companion__progress" aria-hidden="true" />}
       </button>
