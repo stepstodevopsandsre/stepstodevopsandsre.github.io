@@ -19,6 +19,7 @@ export type LearningProfile = {
   profileId: string;
   lastActiveAt: string;
   companionEnabled: boolean;
+  personalisedSuggestionsEnabled: boolean;
   reads: ReadRecord[];
   topicScores: Record<string, number>;
   counts: {
@@ -39,6 +40,7 @@ const createProfile = (): LearningProfile => ({
   profileId: globalThis.crypto?.randomUUID?.() ?? `sr-${Date.now().toString(36)}`,
   lastActiveAt: now(),
   companionEnabled: true,
+  personalisedSuggestionsEnabled: true,
   reads: [],
   topicScores: {},
   counts: {
@@ -58,6 +60,7 @@ const normaliseProfile = (value: unknown): LearningProfile => {
     ...base,
     ...candidate,
     companionEnabled: candidate.companionEnabled !== false,
+    personalisedSuggestionsEnabled: candidate.personalisedSuggestionsEnabled !== false,
     reads: Array.isArray(candidate.reads) ? candidate.reads.slice(0, MAX_READS) : [],
     topicScores: candidate.topicScores && typeof candidate.topicScores === "object" ? candidate.topicScores : {},
     counts: { ...base.counts, ...(candidate.counts ?? {}) }
@@ -78,6 +81,7 @@ export const writeLearningProfile = (profile: LearningProfile) => {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+    window.dispatchEvent(new CustomEvent("sr:learning-profile-updated"));
   } catch {
     // Storage can be disabled or full. The site remains usable without it.
   }
@@ -124,5 +128,19 @@ export const recordCodeCopied = () => updateLearningProfile((profile) => {
 export const setCompanionEnabled = (enabled: boolean) => updateLearningProfile((profile) => {
   profile.companionEnabled = enabled;
 });
+
+export const setPersonalisedSuggestionsEnabled = (enabled: boolean) => updateLearningProfile((profile) => {
+  profile.personalisedSuggestionsEnabled = enabled;
+});
+
+export const clearLearningHistory = () => {
+  const profile = createProfile();
+  const existing = readLearningProfile();
+  profile.profileId = existing.profileId;
+  profile.companionEnabled = existing.companionEnabled;
+  profile.personalisedSuggestionsEnabled = existing.personalisedSuggestionsEnabled;
+  writeLearningProfile(profile);
+  return profile;
+};
 
 export const getLastRead = (profile: LearningProfile) => profile.reads[0];

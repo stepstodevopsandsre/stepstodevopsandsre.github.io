@@ -52,3 +52,11 @@ export const getRecommendation = (
     })
     .sort((a, b) => b.score - a.score)[0]?.item;
 };
+
+export const getRecommendationReason = (profile: LearningProfile, recommendation?: LearningContent) => {
+  if (!recommendation) return "A useful next step from the topics you have explored.";
+  const topTopic = Object.entries(profile.topicScores).sort(([, a], [, b]) => b - a)[0]?.[0];
+  return topTopic
+    ? `Because you explored ${topTopic}, this is a useful next step.`
+    : "A useful next step from the topics you have explored.";
+};

@@ -31,6 +31,7 @@ import {
 } from "@/lib/api";
 import type { BlogFilters as BlogQueryFilters, InterviewQuestionFilters as InterviewQuestionQueryFilters } from "@/lib/api";
 import type { BlogPost, InterviewQuestion } from "@/types";
+import { readLearningProfile, type LearningProfile } from "@/lib/learningProfile";
 
 const cardClassName =
   "flex h-auto min-h-[18rem] flex-col overflow-hidden rounded-[1.5rem] border border-border/70 bg-surface/75 p-5 shadow-panel backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-accent/35 hover:bg-elevated lg:h-[18rem]";
@@ -71,6 +72,15 @@ const HomePage = ({
   const displayPosts = posts.length > 0 ? posts : (isLoading ? [] : latestBlogs);
   const displayQuestions = questions.length > 0 ? questions : [];
   const [previewPost, setPreviewPost] = useState<BlogPost | null>(null);
+  const [learningProfile, setLearningProfile] = useState<LearningProfile>(() => readLearningProfile());
+
+  useEffect(() => {
+    const refreshLearningProfile = () => setLearningProfile(readLearningProfile());
+    window.addEventListener("sr:learning-profile-updated", refreshLearningProfile);
+    return () => window.removeEventListener("sr:learning-profile-updated", refreshLearningProfile);
+  }, []);
+
+  const lastRead = learningProfile.reads[0];
 
   const categories = useMemo(
     () => [...new Set(displayPosts.map((post) => post.tag).filter(Boolean))].sort(),
@@ -101,6 +111,25 @@ const HomePage = ({
   return (
     <main>
       <Hero />
+
+      {lastRead && (
+        <section className="mx-auto mb-4 max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Continue learning">
+          <div className="continue-learning-card">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Continue learning</p>
+              <h2 className="mt-1 truncate font-display text-lg font-semibold text-text">{lastRead.title}</h2>
+              <div className="mt-2 flex items-center gap-3 text-xs text-muted">
+                <span>{lastRead.type === "blog" ? "Article" : "Interview answer"}</span>
+                <span aria-hidden="true">·</span>
+                <span>{lastRead.progress}% complete</span>
+              </div>
+            </div>
+            <a href={lastRead.href} className="inline-flex shrink-0 items-center justify-center rounded-full border border-accent/25 bg-accentSoft px-4 py-2.5 text-sm font-semibold text-accent transition hover:border-accent/50 hover:bg-accent/15">
+              Continue →
+            </a>
+          </div>
+        </section>
+      )}
 
       <ContentGrid
         id="blogs"

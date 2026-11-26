@@ -245,10 +245,41 @@ body {
 
 .sr-companion__progress {
   position: absolute;
-  inset: 0.22rem;
-  border: 2px solid rgb(var(--color-accent) / 0.46);
+  inset: -2px;
+  padding: 2px;
   border-radius: 1.05rem;
+  background: conic-gradient(from -90deg, #22d3ee 0 var(--companion-progress), rgb(var(--color-border) / 0.38) var(--companion-progress) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
   pointer-events: none;
+}
+
+.sr-companion__progress-copy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.8rem;
+  color: rgb(var(--color-muted));
+  font-size: 0.72rem;
+}
+
+.sr-companion__progress-copy strong {
+  color: rgb(var(--color-accent));
+  font-variant-numeric: tabular-nums;
+}
+
+.continue-learning-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid rgb(var(--color-accent) / 0.2);
+  border-radius: 1.25rem;
+  background: linear-gradient(110deg, rgb(var(--color-accent) / 0.08), rgb(var(--color-surface) / 0.72));
+  box-shadow: 0 18px 45px -32px rgba(15, 23, 42, 0.55);
 }
 
 .sr-companion__tray {
@@ -314,13 +345,26 @@ body {
 }
 
 .sr-companion--scrolling .sr-companion__button {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(0.4rem) scale(0.88);
+  opacity: 0.65;
+  transform: scale(0.88);
 }
 
-.sr-companion--scrolling {
-  pointer-events: none;
+@media (max-width: 1023px) {
+  .sr-companion--scrolling .sr-companion__button {
+    opacity: 0.5;
+    transform: scale(0.84);
+  }
+}
+
+@media (max-width: 767px) {
+  .sr-companion--scrolling {
+    pointer-events: none;
+  }
+
+  .sr-companion--scrolling .sr-companion__button {
+    opacity: 0;
+    transform: translateY(0.35rem) scale(0.84);
+  }
 }
 
 @keyframes sr-companion-enter {
@@ -351,8 +395,13 @@ body {
   }
 
   .sr-companion__progress {
-    inset: 0.18rem;
+    inset: -2px;
     border-radius: 0.82rem;
+  }
+
+  .continue-learning-card {
+    align-items: flex-start;
+    padding: 0.95rem;
   }
 
   .sr-companion__tray {

@@ -4,6 +4,7 @@ type MascotMood = "idle" | "welcome" | "focused" | "success" | "encouraging";
 
 type MascotProps = {
   mood: MascotMood;
+  progress?: number;
 };
 
 const Eye = ({ children }: { children?: ReactNode }) => (
@@ -14,7 +15,7 @@ const Eye = ({ children }: { children?: ReactNode }) => (
   </g>
 );
 
-export const Mascot = ({ mood }: MascotProps) => (
+export const Mascot = ({ mood, progress = 0 }: MascotProps) => (
   <svg
     className={`sr-mascot sr-mascot--${mood}`}
     viewBox="0 0 200 260"
@@ -23,7 +24,7 @@ export const Mascot = ({ mood }: MascotProps) => (
     focusable="false"
   >
     <ellipse className="sr-mascot__shadow" cx="100" cy="231" rx="68" ry="8" />
-    <ellipse className="sr-mascot__halo" cx="100" cy="24" rx="32" ry="8" />
+    <ellipse className="sr-mascot__halo" cx="100" cy="24" rx="32" ry="8" style={{ strokeDasharray: `${Math.max(6, progress * 2)} 220` }} />
     <circle className="sr-mascot__spark sr-mascot__spark--one" cx="56" cy="14" r="3.5" />
     <circle className="sr-mascot__spark sr-mascot__spark--two" cx="150" cy="10" r="2.5" />
     <circle className="sr-mascot__spark sr-mascot__spark--three" cx="144" cy="28" r="2" />

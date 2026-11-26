@@ -1,5 +1,5 @@
-import { ArrowRight, BookOpen, ChevronDown, EyeOff, Sparkles, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowRight, BookOpen, ChevronDown, EyeOff, History, Sparkles, X } from "lucide-react";
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import type { BlogPost, InterviewQuestion } from "@/types";
 import {
   getLastRead,
@@ -7,11 +7,13 @@ import {
   recordCodeCopied,
   recordContentOpened,
   recordReadingProgress,
+  clearLearningHistory,
+  setPersonalisedSuggestionsEnabled,
   setCompanionEnabled,
   type LearningContent,
   type LearningProfile
 } from "@/lib/learningProfile";
-import { getRecommendation } from "@/lib/recommendations";
+import { getRecommendation, getRecommendationReason } from "@/lib/recommendations";
 import type { AppRoute } from "@/lib/routes";
 import { Mascot } from "./Mascot";
 
@@ -36,9 +38,15 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
   const [open, setOpen] = useState(false);
   const [mood, setMood] = useState<CompanionMood>("idle");
   const [isScrolling, setIsScrolling] = useState(false);
+  const [progress, setProgress] = useState(0);
   const lastProgress = useRef(0);
   const scrollTimer = useRef<number | undefined>(undefined);
-  const recommendation = useMemo(() => getRecommendation(profile, content, blogs, questions), [profile, content, blogs, questions]);
+  const progressFrame = useRef<number>(0);
+  const recommendation = useMemo(
+    () => profile.personalisedSuggestionsEnabled ? getRecommendation(profile, content, blogs, questions) : undefined,
+    [profile, content, blogs, questions]
+  );
+  const recommendationReason = useMemo(() => getRecommendationReason(profile, recommendation), [profile, recommendation]);
   const lastRead = getLastRead(profile);
   const isReturning = Date.now() - new Date(profile.lastActiveAt).getTime() > 24 * 60 * 60 * 1000;
 
@@ -47,7 +55,10 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
     recordContentOpened(content);
     setProfile(readLearningProfile());
     setMood(isReturning ? "welcome" : "focused");
-    lastProgress.current = 0;
+    const previous = readLearningProfile().reads.find((item) => item.slug === content.slug && item.type === content.type);
+    const previousProgress = previous?.progress ?? 0;
+    lastProgress.current = Math.floor(previousProgress / 25) * 25;
+    setProgress(previousProgress);
   }, [content]);
 
   useEffect(() => {
@@ -76,9 +87,12 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
       const height = document.documentElement.scrollHeight - window.innerHeight;
       if (height <= 0) return;
       const progress = Math.min(100, Math.max(0, (window.scrollY / height) * 100));
+      window.cancelAnimationFrame(progressFrame.current);
+      progressFrame.current = window.requestAnimationFrame(() => setProgress(Math.round(progress)));
       const milestone = Math.floor(progress / 25) * 25;
       if (milestone > lastProgress.current && milestone > 0) {
         lastProgress.current = milestone;
+        setProgress(Math.round(progress));
         recordReadingProgress(content, progress);
         setProfile(readLearningProfile());
         if (milestone >= 50) setMood("encouraging");
@@ -88,6 +102,7 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
     return () => {
       window.removeEventListener("scroll", handleScroll);
       window.clearTimeout(scrollTimer.current);
+      window.cancelAnimationFrame(progressFrame.current);
     };
   }, [content]);
 
@@ -125,7 +140,7 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
         : content
           ? `Reading ${content.type === "blog" ? "article" : "answer"}. Take your time.`
           : recommendation
-            ? `You might enjoy ${recommendation.title}.`
+            ? recommendationReason
             : lastRead
               ? `Continue reading ${lastRead.title}?`
               : "Pick a topic and I will keep your place here.";
@@ -149,14 +164,44 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
           ) : recommendation ? (
             <a className="sr-companion__action" href={recommendation.href} onClick={() => setOpen(false)}>Explore suggestion <ArrowRight size={15} aria-hidden="true" /></a>
           ) : null}
+          {content && (
+            <div className="sr-companion__progress-copy">
+              <span>Reading progress</span>
+              <strong>{progress}%</strong>
+            </div>
+          )}
           <div className="mt-4 flex items-center justify-between gap-3 border-t border-border/60 pt-3">
+            <button
+              type="button"
+              className="sr-companion__quiet-action"
+              onClick={() => {
+                const next = !profile.personalisedSuggestionsEnabled;
+                setPersonalisedSuggestionsEnabled(next);
+                setProfile(readLearningProfile());
+              }}
+              title="Toggle personalised suggestions"
+            >
+              <Sparkles size={14} aria-hidden="true" /> {profile.personalisedSuggestionsEnabled ? "Suggestions on" : "Suggestions off"}
+            </button>
             <button type="button" className="sr-companion__quiet-action" onClick={handleHide}><EyeOff size={14} aria-hidden="true" /> Hide companion</button>
-            <button type="button" className="sr-companion__quiet-action" onClick={() => setOpen(false)}><ChevronDown size={14} aria-hidden="true" /> Minimise</button>
+            <button
+              type="button"
+              className="sr-companion__quiet-action"
+              onClick={() => {
+                clearLearningHistory();
+                setProfile(readLearningProfile());
+                setProgress(0);
+                setMood(content ? "focused" : "idle");
+              }}
+              title="Clear saved learning history"
+            >
+              <History size={14} aria-hidden="true" /> Clear
+            </button>
           </div>
         </section>
       )}
-      <button type="button" className={`sr-companion__button ${mood === "success" ? "sr-companion__button--success" : ""}`} onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label={open ? "Minimise learning companion" : "Open learning companion"}>
-        <Mascot mood={mood} />
+      <button type="button" className={`sr-companion__button ${mood === "success" ? "sr-companion__button--success" : ""}`} style={{ "--companion-progress": `${progress}%` } as CSSProperties} onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label={open ? "Minimise learning companion" : "Open learning companion"}>
+        <Mascot mood={mood} progress={progress} />
         {content && <span className="sr-companion__progress" aria-hidden="true" />}
       </button>
     </div>
