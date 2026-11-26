@@ -149,6 +149,10 @@ body {
 .sr-mascot__mouth { fill: #b5655f; stroke: #2f4a4f; stroke-width: 2; stroke-linejoin: round; }
 .sr-mascot__smile { display: none; fill: #f4a59a; }
 .sr-mascot__concern { display: none; fill: none; stroke: #b5655f; stroke-width: 3; stroke-linecap: round; }
+.sr-mascot__happy-eyes,
+.sr-mascot__error-brows,
+.sr-mascot__celebration-star { display: none; }
+.sr-mascot__celebration-star { fill: #f2c879; }
 .sr-mascot__badge { fill: #fffbf2; font: 700 9px Arial, sans-serif; opacity: 0.75; }
 
 .sr-mascot--idle .sr-mascot__eyes,
@@ -190,6 +194,14 @@ body {
 .sr-mascot--error .sr-mascot__mouth { display: none; }
 .sr-mascot--error .sr-mascot__concern { display: block; }
 .sr-mascot--error .sr-mascot__eyes { transform: translateY(2px); }
+.sr-mascot--error .sr-mascot__error-brows { display: block; }
+
+.sr-mascot--completed .sr-mascot__eyes { display: none; }
+.sr-mascot--completed .sr-mascot__happy-eyes { display: block; }
+.sr-mascot--completed .sr-mascot__celebration-star { display: block; animation: sr-mascot-spark 700ms ease-out 3 alternate; }
+.sr-mascot--completed .sr-mascot__celebration-star--small { animation-delay: 120ms; }
+.sr-mascot--completed .sr-mascot__arm--left { animation: sr-mascot-raise-left 700ms ease-out 2 alternate; }
+.sr-mascot--completed .sr-mascot__arm--right { animation: sr-mascot-raise-right 700ms ease-out 2 alternate; }
 
 .sr-companion__tray--error {
   border-color: rgb(224 122 130 / 0.38);
@@ -281,6 +293,16 @@ body {
 @keyframes sr-mascot-spark {
   from { opacity: 0.45; transform: scale(0.8); }
   to { opacity: 1; transform: scale(1.35); }
+}
+
+@keyframes sr-mascot-raise-left {
+  from { transform: rotate(0); }
+  to { transform: rotate(-42deg) translateY(-7px); }
+}
+
+@keyframes sr-mascot-raise-right {
+  from { transform: rotate(0); }
+  to { transform: rotate(42deg) translateY(-7px); }
 }
 
 .sr-companion__button--success {

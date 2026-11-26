@@ -41,11 +41,21 @@ export const Mascot = ({ mood, progress = 0 }: MascotProps) => (
       <Eye />
       <g transform="translate(40 0)"><Eye /></g>
     </g>
+    <g className="sr-mascot__happy-eyes" fill="none" stroke="#22373A" strokeLinecap="round" strokeWidth="4.5">
+      <path d="M70 111 Q80 99 90 111" />
+      <path d="M110 111 Q120 99 130 111" />
+    </g>
+    <g className="sr-mascot__error-brows" fill="none" stroke="#9B5555" strokeLinecap="round" strokeWidth="4">
+      <path d="M70 98 Q80 104 90 98" />
+      <path d="M110 98 Q120 104 130 98" />
+    </g>
     <ellipse className="sr-mascot__blush" cx="65" cy="125" rx="8" ry="5.5" />
     <ellipse className="sr-mascot__blush" cx="135" cy="125" rx="8" ry="5.5" />
     <path className="sr-mascot__mouth" d="M90 122 Q100 136 110 122" />
     <path className="sr-mascot__smile" d="M91 124 Q100 138 109 124 Q100 130 91 124Z" />
     <path className="sr-mascot__concern" d="M91 134 Q100 125 109 134" />
+    <path className="sr-mascot__celebration-star" d="M0 8 L3 3 L8 0 L3 -3 L0 -8 L-3 -3 L-8 0 L-3 3Z" transform="translate(164 75)" />
+    <path className="sr-mascot__celebration-star sr-mascot__celebration-star--small" d="M0 6 L2 2 L6 0 L2 -2 L0 -6 L-2 -2 L-6 0 L-2 2Z" transform="translate(37 86)" />
     <text className="sr-mascot__badge" x="100" y="262" textAnchor="middle">SR</text>
   </svg>
 );
