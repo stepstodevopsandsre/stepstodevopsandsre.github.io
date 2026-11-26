@@ -14,7 +14,7 @@ import {
   type LearningProfile
 } from "@/lib/learningProfile";
 import { getRecommendation, getRecommendationReason } from "@/lib/recommendations";
-import type { AppRoute } from "@/lib/routes";
+import { getBlogHref, getInterviewQuestionHref, type AppRoute } from "@/lib/routes";
 import { Mascot } from "./Mascot";
 
 type CompanionProps = { route: AppRoute; blogs: BlogPost[]; questions: InterviewQuestion[] };
@@ -24,11 +24,11 @@ const getContent = (route: AppRoute, blogs: BlogPost[], questions: InterviewQues
   if (route.name === "home") return undefined;
   if (route.name === "blog") {
     const post = blogs.find((item) => item.slug === route.slug);
-    if (!post) return undefined;
+    if (!post) return { type: "blog", slug: route.slug, title: "Article unavailable", href: getBlogHref(route.slug), topics: [] };
     return { type: "blog", slug: post.slug, title: post.title, href: post.href, topics: [post.domain ?? "", post.module ?? "", post.tag].filter(Boolean) };
   }
   const question = questions.find((item) => item.slug === route.slug);
-  if (!question) return undefined;
+  if (!question) return { type: "interview", slug: route.slug, title: "Interview answer unavailable", href: getInterviewQuestionHref(route.slug), topics: [] };
   return { type: "interview", slug: question.slug, title: question.question, href: question.href, topics: [question.domain, ...question.keywords] };
 };
 
@@ -89,7 +89,8 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
   useEffect(() => {
     if (mood === "idle" || mood === "focused") return;
     if (mood === "error") return;
-    const timer = window.setTimeout(() => setMood(content ? "focused" : "idle"), 2800);
+    const duration = mood === "completed" ? 5200 : 2800;
+    const timer = window.setTimeout(() => setMood(content ? "focused" : "idle"), duration);
     return () => window.clearTimeout(timer);
   }, [mood, content]);
 
@@ -248,7 +249,7 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
           </div>
         </section>
       )}
-      <button type="button" className={`sr-companion__button ${mood === "success" ? "sr-companion__button--success" : ""}`} style={{ "--companion-progress": `${progress}%` } as CSSProperties} onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label={open ? "Minimise learning companion" : "Open learning companion"}>
+      <button type="button" className={`sr-companion__button ${mood === "success" || mood === "completed" ? "sr-companion__button--success" : ""} ${mood === "error" ? "sr-companion__button--error" : ""}`} style={{ "--companion-progress": `${progress}%` } as CSSProperties} onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label={open ? "Minimise learning companion" : "Open learning companion"}>
         <Mascot mood={mood} progress={progress} />
         {content && <span className="sr-companion__progress" aria-hidden="true" />}
       </button>
