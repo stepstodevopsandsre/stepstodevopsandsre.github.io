@@ -110,6 +110,7 @@ export type PracticeProblem = {
   difficulty: string;
   language: string;
   functionName?: string;
+  executionMode: "Function" | "Stdin/Stdout";
   tags: string[];
   testCases: PracticeTestCase[];
   href: string;
@@ -117,8 +118,10 @@ export type PracticeProblem = {
 };
 
 export type PracticeTestCase = {
-  args: unknown[];
-  expected: unknown;
+  args?: unknown[];
+  expected?: unknown;
+  stdin?: string;
+  expectedOutput?: string;
 };
 
 export type PracticeProblemArticle = PracticeProblem & {

@@ -14,8 +14,8 @@ type RunState =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "running" }
-  | { status: "success"; results: Array<{ actual: unknown; expected: unknown; passed: boolean; milliseconds: number }>; durationMs: number }
-  | { status: "failed"; message: string; durationMs?: number; results?: Array<{ actual: unknown; expected: unknown; passed: boolean; milliseconds: number }> };
+  | { status: "success"; results: Array<{ actual: unknown; expected: unknown; passed: boolean; milliseconds: number }>; stdout?: string; durationMs: number }
+  | { status: "failed"; message: string; durationMs?: number; stdout?: string; results?: Array<{ actual: unknown; expected: unknown; passed: boolean; milliseconds: number }> };
 
 type PythonCodeEditorProps = {
   value: string;
@@ -123,6 +123,7 @@ export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
   const [runState, setRunState] = useState<RunState>({ status: "idle" });
   const [code, setCode] = useState("");
   const [copied, setCopied] = useState(false);
+  const [customInput, setCustomInput] = useState("");
 
   const draftKey = `sr-practice-draft-${slug}`;
 
@@ -172,10 +173,10 @@ export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
       window.clearTimeout(timeout);
       worker.terminate();
       if (event.data.type === "result") {
-        const result = event.data as unknown as { passed: boolean; results: Array<{ actual: unknown; expected: unknown; passed: boolean; milliseconds: number }>; durationMs: number };
+        const result = event.data as unknown as { passed: boolean; results: Array<{ actual: unknown; expected: unknown; passed: boolean; milliseconds: number }>; stdout?: string; durationMs: number };
         setRunState(result.passed
-          ? { status: "success", results: result.results, durationMs: result.durationMs }
-          : { status: "failed", message: "One or more tests did not pass.", results: result.results, durationMs: result.durationMs });
+          ? { status: "success", results: result.results, stdout: result.stdout, durationMs: result.durationMs }
+          : { status: "failed", message: "One or more tests did not pass.", stdout: result.stdout, results: result.results, durationMs: result.durationMs });
       } else {
         setRunState({ status: "failed", message: (event.data as unknown as { message: string }).message || "The code could not run." });
       }
@@ -188,7 +189,7 @@ export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
       setRunState({ status: "failed", message: "The Python runtime could not start. Please try again." });
     };
     setRunState({ status: "running" });
-    worker.postMessage({ type: "run", code, functionName: state.article.functionName, testCases: state.article.testCases });
+    worker.postMessage({ type: "run", code, functionName: state.article.functionName, executionMode: state.article.executionMode, stdinOverride: customInput, testCases: state.article.testCases });
   };
 
   const resetCode = () => {
@@ -280,7 +281,7 @@ export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
             <section className="overflow-hidden rounded-[2rem] border border-border/70 bg-surface/80 shadow-panel lg:sticky lg:top-24">
             <div className="bg-canvas/35 p-5 sm:p-8">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Python playground</p><p className="mt-1 text-sm text-muted">Run your function against the visible examples. The runtime loads only when you run.</p></div>
+                <div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Python playground</p><p className="mt-1 text-sm text-muted">Run in {article.executionMode === "Stdin/Stdout" ? "stdin/stdout" : "function"} mode against the visible examples.</p></div>
                 <div className="flex items-center gap-2">
                   <button type="button" onClick={resetCode} className="inline-flex items-center gap-2 rounded-full border border-border/70 px-3.5 py-2 text-sm font-semibold text-muted transition hover:border-accent/40 hover:text-text"><RotateCcw size={15} /> Reset</button>
                   <button type="button" onClick={runCode} disabled={runState.status === "loading" || runState.status === "running"} className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:brightness-105 disabled:cursor-wait disabled:opacity-60"><Play size={15} /> {runState.status === "loading" ? "Preparing…" : runState.status === "running" ? "Running…" : "Run"}</button>
@@ -290,11 +291,12 @@ export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
                 <div className="flex items-center justify-between border-b border-slate-700/80 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-400"><span>Python</span><button type="button" onClick={copyCode} className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 transition ${copied ? "bg-emerald-400/15 text-emerald-400" : "hover:text-white"}`} aria-live="polite">{copied ? <Check size={13} /> : <Copy size={13} />} {copied ? "Copied!" : "Copy"}</button></div>
                 <PythonCodeEditor value={code} onChange={(value) => { setCode(value); setRunState({ status: "idle" }); }} />
               </div>
+              <div className="mt-4 rounded-2xl border border-border/70 bg-canvas/35 p-4"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Visible test cases</p><div className="mt-3 grid gap-2 text-xs text-muted sm:grid-cols-2">{article.testCases.map((testCase, index) => <div key={index} className="rounded-xl border border-border/60 bg-surface/50 p-3">Test {index + 1}: {article.executionMode === "Stdin/Stdout" ? <code>{testCase.stdin?.trim()}</code> : <code>{JSON.stringify(testCase.args)}</code>}</div>)}</div>{article.executionMode === "Stdin/Stdout" && <label className="mt-4 block text-xs font-semibold text-muted">Custom input<textarea value={customInput} onChange={(event) => setCustomInput(event.target.value)} placeholder={article.testCases[0]?.stdin || "Enter stdin for your run"} className="mt-2 min-h-20 w-full rounded-xl border border-border/70 bg-surface/70 p-3 font-mono text-xs text-text outline-none focus:border-accent/50" /></label>}</div>
               {runState.status === "success" && (
-                <div className="mt-4 rounded-2xl border border-emerald-400/25 bg-emerald-400/10 p-4"><div className="flex items-center gap-2 text-sm font-semibold text-emerald-500"><CheckCircle2 size={17} /> All visible tests passed <span className="font-normal text-muted">in {runState.durationMs} ms</span></div><div className="mt-3 grid gap-2 sm:grid-cols-3">{runState.results.map((result, index) => <div key={index} className="rounded-xl border border-border/60 bg-surface/50 p-3 text-xs text-muted">Test {index + 1}: {String(result.actual)} <span className="text-emerald-500">✓</span></div>)}</div></div>
+                <div className="mt-4 rounded-2xl border border-emerald-400/25 bg-emerald-400/10 p-4"><div className="flex items-center gap-2 text-sm font-semibold text-emerald-500"><CheckCircle2 size={17} /> All visible tests passed <span className="font-normal text-muted">in {runState.durationMs} ms</span></div>{runState.stdout && <pre className="mt-3 overflow-x-auto rounded-xl bg-slate-950 p-3 text-xs text-slate-200">{runState.stdout}</pre>}<div className="mt-3 grid gap-2 sm:grid-cols-3">{runState.results.map((result, index) => <div key={index} className="rounded-xl border border-border/60 bg-surface/50 p-3 text-xs text-muted">Test {index + 1}: {String(result.actual)} <span className="text-emerald-500">✓</span></div>)}</div></div>
               )}
               {runState.status === "failed" && (
-                <div className="mt-4 rounded-2xl border border-rose-400/25 bg-rose-400/10 p-4"><div className="flex items-center gap-2 text-sm font-semibold text-rose-500"><XCircle size={17} /> Run needs attention</div><p className="mt-2 text-sm leading-6 text-muted">{runState.message || "One or more tests did not pass."}</p>{runState.results && <div className="mt-3 grid gap-2 sm:grid-cols-3">{runState.results.map((result, index) => <div key={index} className="rounded-xl border border-border/60 bg-surface/50 p-3 text-xs text-muted">Test {index + 1}: expected {String(result.expected)}, received {String(result.actual)} {result.passed ? "✓" : "×"}</div>)}</div>}</div>
+                <div className="mt-4 rounded-2xl border border-rose-400/25 bg-rose-400/10 p-4"><div className="flex items-center gap-2 text-sm font-semibold text-rose-500"><XCircle size={17} /> Run needs attention</div><p className="mt-2 text-sm leading-6 text-muted">{runState.message || "One or more tests did not pass."}</p>{runState.stdout && <pre className="mt-3 overflow-x-auto rounded-xl bg-slate-950 p-3 text-xs text-slate-200">{runState.stdout}</pre>}{runState.results && <div className="mt-3 grid gap-2 sm:grid-cols-3">{runState.results.map((result, index) => <div key={index} className="rounded-xl border border-border/60 bg-surface/50 p-3 text-xs text-muted">Test {index + 1}: expected {String(result.expected)}, received {String(result.actual)} {result.passed ? "✓" : "×"}</div>)}</div>}</div>
               )}
             </div>
             </section>

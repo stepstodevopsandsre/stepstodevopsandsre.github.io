@@ -1,4 +1,4 @@
-export type LearningContentType = "blog" | "interview";
+export type LearningContentType = "blog" | "interview" | "practice";
 
 export type LearningContent = {
   type: LearningContentType;
@@ -28,6 +28,8 @@ export type LearningProfile = {
     questionsOpened: number;
     articlesCompleted: number;
     questionsCompleted: number;
+    practiceOpened: number;
+    practiceCompleted: number;
     codeBlocksCopied: number;
   };
 };
@@ -50,6 +52,8 @@ const createProfile = (): LearningProfile => ({
     questionsOpened: 0,
     articlesCompleted: 0,
     questionsCompleted: 0,
+    practiceOpened: 0,
+    practiceCompleted: 0,
     codeBlocksCopied: 0
   }
 });
@@ -104,7 +108,7 @@ export const recordContentOpened = (content: LearningContent) => updateLearningP
   if (existing) Object.assign(existing, content, { lastOpenedAt: openedAt });
   else profile.reads.unshift({ ...content, progress: 0, completed: false, lastOpenedAt: openedAt });
   profile.reads = profile.reads.slice(0, MAX_READS);
-  const countKey = content.type === "blog" ? "articlesOpened" : "questionsOpened";
+  const countKey = content.type === "blog" ? "articlesOpened" : content.type === "interview" ? "questionsOpened" : "practiceOpened";
   profile.counts[countKey] += existing ? 0 : 1;
   content.topics.forEach((topic) => {
     profile.topicScores[topic] = (profile.topicScores[topic] ?? 0) + (existing ? 0.15 : 1);
@@ -119,7 +123,7 @@ export const recordReadingProgress = (content: LearningContent, progress: number
   item.progress = nextProgress;
   item.completed = nextProgress >= 90;
   if (!wasCompleted && item.completed) {
-    const countKey = content.type === "blog" ? "articlesCompleted" : "questionsCompleted";
+    const countKey = content.type === "blog" ? "articlesCompleted" : content.type === "interview" ? "questionsCompleted" : "practiceCompleted";
     profile.counts[countKey] += 1;
   }
 });

@@ -23,7 +23,8 @@ type CompanionMood = "idle" | "welcome" | "focused" | "success" | "completed" | 
 
 const getContent = (route: AppRoute, blogs: BlogPost[], questions: InterviewQuestion[]): LearningContent | undefined => {
   if (route.name === "home") return undefined;
-  if (route.name === "practiceList" || route.name === "practiceProblem") return undefined;
+  if (route.name === "practiceList") return undefined;
+  if (route.name === "practiceProblem") return { type: "practice", slug: route.slug, title: "Python practice problem", href: `#/practice/${route.slug}`, topics: ["Python"] };
   if (route.name === "blog") {
     const post = blogs.find((item) => item.slug === route.slug);
     if (!post) return { type: "blog", slug: route.slug, title: "Article unavailable", href: getBlogHref(route.slug), topics: [] };

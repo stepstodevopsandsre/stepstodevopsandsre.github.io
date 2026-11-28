@@ -15,6 +15,7 @@ import {
   sanitizeArticleHtml,
   parseNotionPageToPost,
   parseNotionPageToInterviewQuestion,
+  parseNotionPageToPracticeProblem,
   cleanNotionText,
   getDeterministicReadingTime
 } from "../netlify/functions/_shared/blog-utils.js";
@@ -222,5 +223,25 @@ test("parseNotionPageToInterviewQuestion parses the interview question schema", 
   assert.deepEqual(parsed.companies, ["Amazon", "Google"]);
   assert.equal(parsed.publishedDate, "2026-09-15");
   assert.equal(parsed.href, "#/interview-questions/what-is-page-fault");
+});
+
+test("parseNotionPageToPracticeProblem parses execution mode and test cases", () => {
+  const parsed = parseNotionPageToPracticeProblem({
+    id: "practice-1",
+    properties: {
+      Question: { type: "title", title: [{ plain_text: "Running total" }] },
+      Slug: { type: "rich_text", rich_text: [{ plain_text: "running-total" }] },
+      Status: { type: "status", status: { name: "Done" } },
+      Topic: { type: "multi_select", multi_select: [{ name: "Arrays" }] },
+      Difficulty: { type: "select", select: { name: "Advanced" } },
+      Language: { type: "select", select: { name: "Python" } },
+      "Execution Mode": { type: "select", select: { name: "Stdin/Stdout" } },
+      "Test Cases": { type: "rich_text", rich_text: [{ plain_text: "[{\"stdin\":\"1 2\\n\",\"expectedOutput\":\"1 3\"}]" }] }
+    }
+  });
+
+  assert.equal(parsed.executionMode, "Stdin/Stdout");
+  assert.deepEqual(parsed.testCases, [{ stdin: "1 2\n", expectedOutput: "1 3" }]);
+  assert.equal(parsed.href, "#/practice/running-total");
 });
 

@@ -253,12 +253,13 @@ export const parseNotionPageToPracticeProblem = (page, slugProperty = "Slug") =>
   try {
     const parsed = JSON.parse(getPropertyText(properties["Test Cases"]) || "[]");
     if (Array.isArray(parsed)) {
-      testCases = parsed.filter((item) => item && Array.isArray(item.args) && Object.prototype.hasOwnProperty.call(item, "expected"));
+      testCases = parsed.filter((item) => item && ((Array.isArray(item.args) && Object.prototype.hasOwnProperty.call(item, "expected")) || (typeof item.stdin === "string" && typeof item.expectedOutput === "string")));
     }
   } catch {
     testCases = [];
   }
   const publishedDate = getPropertyText(properties["Published Date"]);
+  const executionMode = cleanNotionText(getPropertyText(properties["Execution Mode"])) || "Function";
 
   return {
     slug,
@@ -270,6 +271,7 @@ export const parseNotionPageToPracticeProblem = (page, slugProperty = "Slug") =>
     difficulty,
     language,
     functionName: functionName || undefined,
+    executionMode: executionMode === "Stdin/Stdout" ? "Stdin/Stdout" : "Function",
     tags,
     testCases,
     publishedDate: publishedDate || undefined,

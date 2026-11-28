@@ -5,7 +5,9 @@ type RunRequest = {
   type: "run";
   code: string;
   functionName?: string;
-  testCases: Array<{ args: unknown[]; expected: unknown }>;
+  executionMode?: "Function" | "Stdin/Stdout";
+  stdinOverride?: string;
+  testCases: Array<{ args?: unknown[]; expected?: unknown; stdin?: string; expectedOutput?: string }>;
 };
 
 let pyodidePromise: Promise<any> | null = null;
@@ -43,24 +45,44 @@ sys.setrecursionlimit(2000)
 _output = io.StringIO()
 _cases = json.loads(${JSON.stringify(testCases)})
 _name = ${functionName}
-_fn = globals().get(_name) if _name else None
-if not callable(_fn):
-    raise RuntimeError("The expected function was not found. Define the required function and run again.")
-_results = []
-with contextlib.redirect_stdout(_output):
-    for _case in _cases:
-        _started = time.perf_counter()
-        _value = _fn(*_case.get("args", []))
-        _elapsed = (time.perf_counter() - _started) * 1000
-        _results.append({"actual": _value, "expected": _case.get("expected"), "passed": _value == _case.get("expected"), "milliseconds": round(_elapsed, 2)})
-_output.write(json.dumps({"results": _results}, default=str))
-_output.getvalue()
+_mode = ${JSON.stringify(event.data.executionMode || "Function")}
+if _mode == "Stdin/Stdout":
+    _input = ${JSON.stringify(event.data.stdinOverride ?? "")} or (_cases[0].get("stdin", "") if _cases else "")
+    _old_stdin = sys.stdin
+    sys.stdin = io.StringIO(_input)
+    with contextlib.redirect_stdout(_output):
+        exec(${JSON.stringify(event.data.code)}, globals())
+    sys.stdin = _old_stdin
+    _actual = _output.getvalue().strip()
+    _expected = _cases[0].get("expectedOutput", "") if _cases else ""
+    _output.seek(0)
+    _output.truncate(0)
+    _output.write(json.dumps({"results": [{"actual": _actual, "expected": _expected, "passed": _actual == _expected, "milliseconds": 0}]}))
+    _output.getvalue()
+else:
+    _fn = globals().get(_name) if _name else None
+    if not callable(_fn):
+        raise RuntimeError("The expected function was not found. Define the required function and run again.")
+    _results = []
+    with contextlib.redirect_stdout(_output):
+        for _case in _cases:
+            _started = time.perf_counter()
+            _value = _fn(*_case.get("args", []))
+            _elapsed = (time.perf_counter() - _started) * 1000
+            _results.append({"actual": _value, "expected": _case.get("expected"), "passed": _value == _case.get("expected"), "milliseconds": round(_elapsed, 2)})
+    _captured = _output.getvalue()
+    _output.seek(0)
+    _output.truncate(0)
+    _output.write(json.dumps({"results": _results, "stdout": _captured}, default=str))
+    _output.getvalue()
 `;
     const output = await pyodide.runPythonAsync(`${event.data.code}\n${harness}`);
-    const parsed = JSON.parse(String(output).trim().split("\n").pop() || "{}");
+    const rawOutput = String(output);
+    if (rawOutput.length > 20000) throw new Error("Output limit exceeded. Keep your program output below 20,000 characters.");
+    const parsed = JSON.parse(rawOutput.trim().split("\n").pop() || "{}");
     const results = Array.isArray(parsed.results) ? parsed.results : [];
     const passed = results.length > 0 && results.every((item: { passed: boolean }) => item.passed);
-    self.postMessage({ type: "result", passed, results, durationMs: Math.round(performance.now() - startedAt) });
+    self.postMessage({ type: "result", passed, results, stdout: typeof parsed.stdout === "string" ? parsed.stdout : "", durationMs: Math.round(performance.now() - startedAt) });
   } catch (error) {
     self.postMessage({ type: "error", message: formatPythonError(error), durationMs: Math.round(performance.now() - startedAt) });
   }
