@@ -14,6 +14,7 @@ import { Hero } from "@/components/Hero";
 import { InterviewQuestionFilters } from "@/components/InterviewQuestionFilters";
 import { InterviewQuestionPage } from "@/components/InterviewQuestionPage";
 import { MotionReveal } from "@/components/MotionReveal";
+import { PracticeProblemPage } from "@/components/PracticeProblemPage";
 import { SelectionAskAiPopover } from "@/components/SelectionAskAiPopover";
 import { ShareButton } from "@/components/ShareButton";
 import {
@@ -521,6 +522,8 @@ function App() {
         questions.find((question) => question.slug === route.slug) ||
         latestInterviewQuestions.find((question) => question.slug === route.slug);
       document.title = `${activeQuestion?.question ?? "Interview Question"} | ${site.name}`;
+    } else if (route.name === "practiceProblem") {
+      document.title = `Practice Problem | ${site.name}`;
     } else {
       document.title = `${site.name} | ${site.tagline}`;
     }
@@ -530,7 +533,7 @@ function App() {
     <div className="min-h-screen bg-canvas text-text">
       <div className="pointer-events-none fixed inset-x-0 top-0 z-0 mx-auto h-[34rem] max-w-6xl bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.16),_transparent_50%),radial-gradient(circle_at_20%_15%,_rgba(251,113,133,0.16),_transparent_28%)] blur-3xl dark:bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.14),_transparent_45%),radial-gradient(circle_at_20%_15%,_rgba(251,113,133,0.12),_transparent_24%)]" />
       <div className="relative z-10">
-        <Header compactOnScroll={route.name === "blog" || route.name === "interviewQuestion"} />
+        <Header compactOnScroll={route.name === "blog" || route.name === "interviewQuestion" || route.name === "practiceProblem"} />
         <CodeBlockCopyEnhancer />
         <SelectionAskAiPopover />
         {route.name === "blog" ? (
@@ -540,6 +543,8 @@ function App() {
             slug={route.slug}
             allQuestions={questions.length > 0 ? questions : latestInterviewQuestions}
           />
+        ) : route.name === "practiceProblem" ? (
+          <PracticeProblemPage slug={route.slug} />
         ) : (
           <HomePage
             posts={blogs}

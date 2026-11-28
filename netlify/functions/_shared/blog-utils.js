@@ -240,6 +240,34 @@ export const parseNotionPageToInterviewQuestion = (page, slugProperty = "Slug") 
   };
 };
 
+export const parseNotionPageToPracticeProblem = (page, slugProperty = "Slug") => {
+  const properties = page.properties || {};
+  const question = cleanNotionText(getPropertyText(properties.Question) || getPageTitle(page));
+  const slug = cleanNotionText(getPropertyText(properties[slugProperty] || properties.Slug)) || page.id;
+  const topics = getPropertyList(properties.Topic);
+  const difficulty = cleanNotionText(getPropertyText(properties.Difficulty)) || "Beginner";
+  const language = cleanNotionText(getPropertyText(properties.Language)) || "Python";
+  const functionName = cleanNotionText(getPropertyText(properties["Function Name"]));
+  const tags = getPropertyList(properties.Tags);
+  const publishedDate = getPropertyText(properties["Published Date"]);
+
+  return {
+    slug,
+    notionPageId: page.id,
+    question,
+    title: question,
+    summary: topics.length > 0 ? `${language} practice for ${topics.join(", ")}.` : `${language} practice problem.`,
+    topics,
+    difficulty,
+    language,
+    functionName: functionName || undefined,
+    tags,
+    publishedDate: publishedDate || undefined,
+    href: `#/practice/${slug}`,
+    lastEditedTime: page.last_edited_time
+  };
+};
+
 export const getSlugFilter = (propertyName, slug, propertyType = "rich_text") => {
   if (propertyType === "title") {
     return {

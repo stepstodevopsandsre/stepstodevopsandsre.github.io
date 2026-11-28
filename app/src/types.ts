@@ -99,3 +99,25 @@ export type InterviewQuestionArticle = BlogArticle & {
   companies: string[];
   publishedDate?: string;
 };
+
+export type PracticeProblem = {
+  slug: string;
+  notionPageId?: string;
+  question: string;
+  title: string;
+  summary: string;
+  topics: string[];
+  difficulty: string;
+  language: string;
+  functionName?: string;
+  tags: string[];
+  href: string;
+  publishedDate?: string;
+};
+
+export type PracticeProblemArticle = PracticeProblem & {
+  url?: string;
+  html: string;
+  markdown: string;
+  lastEditedTime?: string;
+};

@@ -1,5 +1,12 @@
 import { latestBlogs, latestInterviewQuestions } from "@/data/siteContent";
-import type { BlogArticle, BlogPost, InterviewQuestion, InterviewQuestionArticle } from "@/types";
+import type {
+  BlogArticle,
+  BlogPost,
+  InterviewQuestion,
+  InterviewQuestionArticle,
+  PracticeProblem,
+  PracticeProblemArticle
+} from "@/types";
 
 const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 const DEFAULT_PRODUCTION_API_BASE_URL = "https://stepstodevopsandsre.netlify.app";
@@ -9,6 +16,7 @@ const BLOGS_CACHE_KEY = "notion_blogs_cache_v2";
 const ARTICLE_CACHE_PREFIX = "notion_article_cache_v2_";
 const INTERVIEW_QUESTIONS_CACHE_KEY = "notion_interview_questions_cache_v1";
 const INTERVIEW_QUESTION_CACHE_PREFIX = "notion_interview_question_cache_v1_";
+const PRACTICE_PROBLEM_CACHE_PREFIX = "notion_practice_problem_cache_v1_";
 
 const getApiBaseUrl = () => {
   const configured = import.meta.env.VITE_BLOG_API_BASE_URL;
@@ -116,6 +124,9 @@ export const getInterviewQuestionsEndpoint = (
 
 export const getInterviewQuestionEndpoint = (slug: string) =>
   getEndpoint(`/.netlify/functions/interview-question?slug=${encodeURIComponent(slug)}`);
+
+export const getPracticeProblemEndpoint = (slug: string) =>
+  getEndpoint(`/.netlify/functions/practice-problem?slug=${encodeURIComponent(slug)}`);
 
 /**
  * Replaces Notion syntax artifacts in text:
@@ -655,5 +666,39 @@ export const fetchInterviewQuestionArticle = async (
     // Ignore quota errors
   }
 
+  return article;
+};
+
+export const fetchPracticeProblemArticle = async (slug: string): Promise<PracticeProblemArticle> => {
+  const cacheKey = `${PRACTICE_PROBLEM_CACHE_PREFIX}${slug}`;
+
+  try {
+    const cachedRaw = localStorage.getItem(cacheKey);
+    if (cachedRaw) {
+      const cached = JSON.parse(cachedRaw) as { timestamp: number; article: PracticeProblemArticle };
+      if (Date.now() - cached.timestamp < CACHE_TTL_MS) return cached.article;
+    }
+  } catch {
+    // Ignore cache parse errors.
+  }
+
+  const response = await fetch(getPracticeProblemEndpoint(slug), { headers: { Accept: "application/json" } });
+  if (!response.ok) {
+    let message = `Unable to load practice problem (${response.status}).`;
+    try {
+      const payload = await response.json();
+      if (payload?.error) message = payload.error;
+    } catch {
+      // Keep the status-based message.
+    }
+    throw new Error(message);
+  }
+
+  const article = (await response.json()) as PracticeProblemArticle;
+  try {
+    localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), article }));
+  } catch {
+    // Ignore storage quota errors.
+  }
   return article;
 };

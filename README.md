@@ -64,6 +64,7 @@ NOTION_BLOG_SLUG_PROPERTY=Slug
 NOTION_BLOG_STATUS_PROPERTY=Status
 NOTION_BLOG_PUBLISHED_VALUE=Done
 NOTION_INTERVIEW_DATABASE_ID=your_notion_interview_questions_database_id
+NOTION_PRACTICE_DATABASE_ID=your_notion_practice_problems_database_id
 NOTION_INTERVIEW_SLUG_PROPERTY=Slug
 NOTION_INTERVIEW_SLUG_PROPERTY_TYPE=rich_text
 NOTION_INTERVIEW_STATUS_PROPERTY=Status
@@ -208,7 +209,20 @@ and confirm again that the source is set to `GitHub Actions` on the renamed repo
 3. In Netlify, connect the repo and configure the function environment variables.
 4. Create the Notion blog and interview-question databases and share both with the Notion integration token.
 5. Add a row page for each article/question and set its `Slug` and `Status`.
-6. Configure both database IDs in Netlify.
+6. Configure the database IDs in Netlify.
+
+### Practice problems
+
+The Python practice feature uses a separate Notion data source so it cannot change the existing blog or interview-question flow.
+
+- Notion database: `Practice Problems`
+- Data source ID: `4265aace-fb86-8133-b67c-000bcaf602af`
+- Database ID for Netlify: `4265aace-fb86-8178-a826-da138d82f34c`
+- Required Netlify variable: `NOTION_PRACTICE_DATABASE_ID`
+- A row is public only when `Status` is `Done`.
+- Public route shape: `#/practice/<slug>`
+
+The first layer only loads the published problem content. The Python editor and Web Worker runtime are intentionally deferred to the next layer so existing pages do not pay the runtime payload cost.
 7. Confirm the Pages site is active in GitHub settings.
 8. Open the GitHub Pages URL and test the sample blog and interview-question routes.
 
