@@ -2,7 +2,7 @@
 import json, sys, io, contextlib, time
 sys.setrecursionlimit(2000)
 _cases = json.loads(${JSON.stringify(d)})
-_name = json.loads(${c})
+_name = ${c}
 _fn = globals().get(_name) if _name else None
 if not callable(_fn):
     raise RuntimeError("The expected function was not found. Define the required function and run again.")

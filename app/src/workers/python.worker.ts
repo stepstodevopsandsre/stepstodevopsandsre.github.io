@@ -30,7 +30,7 @@ self.onmessage = async (event: MessageEvent<RunRequest>) => {
 import json, sys, io, contextlib, time
 sys.setrecursionlimit(2000)
 _cases = json.loads(${JSON.stringify(testCases)})
-_name = json.loads(${functionName})
+_name = ${functionName}
 _fn = globals().get(_name) if _name else None
 if not callable(_fn):
     raise RuntimeError("The expected function was not found. Define the required function and run again.")
