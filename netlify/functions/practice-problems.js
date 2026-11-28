@@ -38,10 +38,20 @@ export const handler = async (event) => {
     const difficultyProperty = process.env.NOTION_PRACTICE_DIFFICULTY_PROPERTY || "Difficulty";
     const questionProperty = process.env.NOTION_PRACTICE_QUESTION_PROPERTY || "Question";
     const slugProperty = process.env.NOTION_PRACTICE_SLUG_PROPERTY || "Slug";
+    const tagsProperty = process.env.NOTION_PRACTICE_TAGS_PROPERTY || "Tags";
     const filters = [getPublishedFilter(statusProperty, process.env.NOTION_PRACTICE_PUBLISHED_VALUE || "Done", process.env.NOTION_PRACTICE_STATUS_PROPERTY_TYPE || "status")];
     if (topic && topic !== "all") filters.push(getMultiSelectContainsFilter(topicProperty, topic));
     if (difficulty && difficulty !== "all") filters.push(getDifficultyFilter(difficultyProperty, difficulty, process.env.NOTION_PRACTICE_DIFFICULTY_PROPERTY_TYPE || "select"));
-    if (search) filters.push({ or: [getTitleContainsFilter(questionProperty, search), { property: slugProperty, rich_text: { contains: search } }] });
+    if (search) {
+      filters.push({
+        or: [
+          getTitleContainsFilter(questionProperty, search),
+          { property: slugProperty, rich_text: { contains: search } },
+          getMultiSelectContainsFilter(topicProperty, search),
+          getMultiSelectContainsFilter(tagsProperty, search)
+        ]
+      });
+    }
     const response = await notion.databases.query({
       database_id: databaseId,
       filter: filters.length === 1 ? filters[0] : { and: filters },
