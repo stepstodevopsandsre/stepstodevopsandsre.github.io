@@ -16,7 +16,7 @@ const BLOGS_CACHE_KEY = "notion_blogs_cache_v2";
 const ARTICLE_CACHE_PREFIX = "notion_article_cache_v2_";
 const INTERVIEW_QUESTIONS_CACHE_KEY = "notion_interview_questions_cache_v1";
 const INTERVIEW_QUESTION_CACHE_PREFIX = "notion_interview_question_cache_v1_";
-const PRACTICE_PROBLEM_CACHE_PREFIX = "notion_practice_problem_cache_v1_";
+const PRACTICE_PROBLEM_CACHE_PREFIX = "notion_practice_problem_cache_v2_";
 
 const getApiBaseUrl = () => {
   const configured = import.meta.env.VITE_BLOG_API_BASE_URL;

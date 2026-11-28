@@ -22,6 +22,17 @@ type PythonCodeEditorProps = {
   onChange: (value: string) => void;
 };
 
+const splitWorkedSolution = (html: string) => {
+  const solutionPattern = /(<h2[^>]*>Worked solution<\/h2>[\s\S]*?)(?=<h2[^>]*>|$)/i;
+  const match = html.match(solutionPattern);
+  if (!match || match.index === undefined) return { before: html, solution: "", after: "" };
+  return {
+    before: html.slice(0, match.index),
+    solution: match[1],
+    after: html.slice(match.index + match[1].length)
+  };
+};
+
 const PythonCodeEditor = ({ value, onChange }: PythonCodeEditorProps) => {
   const [highlighted, setHighlighted] = useState("");
   const codeLayerRef = useRef<HTMLPreElement>(null);
@@ -201,15 +212,29 @@ export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
   };
 
   const article = state.status === "success" ? state.article : undefined;
+  const articleSections = article ? splitWorkedSolution(article.html) : null;
 
   return (
     <main className="mx-auto max-w-[88rem] px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-      <div className="mx-auto max-w-5xl">
-        <MotionReveal>
-          <a href="#" className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-surface/70 px-4 py-2.5 text-sm font-medium text-muted transition hover:border-accent/30 hover:text-text">
-            <ArrowLeft size={16} /> Back to home
-          </a>
-        </MotionReveal>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[180px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)]">
+        <aside className="hidden lg:block">
+          <div className="sticky top-24">
+            <MotionReveal>
+              <a href="#" className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-surface/70 px-4 py-2.5 text-sm font-medium text-muted transition hover:border-accent/30 hover:text-text">
+                <ArrowLeft size={16} /> Back to home
+              </a>
+            </MotionReveal>
+          </div>
+        </aside>
+
+        <div className="mx-auto w-full max-w-6xl">
+          <div className="lg:hidden">
+            <MotionReveal>
+              <a href="#" className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-surface/70 px-4 py-2.5 text-sm font-medium text-muted transition hover:border-accent/30 hover:text-text">
+                <ArrowLeft size={16} /> Back to home
+              </a>
+            </MotionReveal>
+          </div>
 
         <MotionReveal className="mt-6 rounded-[2rem] border border-border/70 bg-surface/80 p-6 shadow-panel backdrop-blur sm:p-8" delay={0.05}>
           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-accent">
@@ -242,7 +267,14 @@ export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
         {article && (
           <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
             <section className="overflow-hidden rounded-[2rem] border border-border/70 bg-surface/80 shadow-panel">
-              <article className="article-content prose prose-slate max-w-none overflow-x-hidden p-5 dark:prose-invert sm:p-8" dangerouslySetInnerHTML={{ __html: article.html }} />
+              <article className="article-content prose prose-slate max-w-none overflow-x-hidden p-5 dark:prose-invert sm:p-8" dangerouslySetInnerHTML={{ __html: articleSections?.before || article.html }} />
+              {articleSections?.solution && (
+                <details className="border-t border-border/70 bg-canvas/30 p-5 sm:p-8">
+                  <summary className="cursor-pointer list-none text-sm font-semibold text-accent marker:hidden">Show worked solution <span className="ml-2 text-xs font-normal text-muted">Reveal after trying the problem</span></summary>
+                  <article className="article-content prose prose-slate mt-5 max-w-none overflow-x-hidden dark:prose-invert" dangerouslySetInnerHTML={{ __html: articleSections.solution }} />
+                </details>
+              )}
+              {articleSections?.after && <article className="article-content prose prose-slate max-w-none overflow-x-hidden p-5 dark:prose-invert sm:p-8" dangerouslySetInnerHTML={{ __html: articleSections.after }} />}
             </section>
             <section className="overflow-hidden rounded-[2rem] border border-border/70 bg-surface/80 shadow-panel lg:sticky lg:top-24">
             <div className="bg-canvas/35 p-5 sm:p-8">
@@ -251,8 +283,8 @@ export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
                 <div className="flex items-center gap-2">
                   <button type="button" onClick={resetCode} className="inline-flex items-center gap-2 rounded-full border border-border/70 px-3.5 py-2 text-sm font-semibold text-muted transition hover:border-accent/40 hover:text-text"><RotateCcw size={15} /> Reset</button>
                   <button type="button" onClick={runCode} disabled={runState.status === "loading" || runState.status === "running"} className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:brightness-105 disabled:cursor-wait disabled:opacity-60"><Play size={15} /> {runState.status === "loading" ? "Preparing…" : runState.status === "running" ? "Running…" : "Run"}</button>
-                </div>
-              </div>
+          </div>
+        </div>
               <div className="mt-4 overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-950 shadow-inner">
                 <div className="flex items-center justify-between border-b border-slate-700/80 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-400"><span>Python</span><button type="button" onClick={copyCode} className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 transition ${copied ? "bg-emerald-400/15 text-emerald-400" : "hover:text-white"}`} aria-live="polite">{copied ? <Check size={13} /> : <Copy size={13} />} {copied ? "Copied!" : "Copy"}</button></div>
                 <PythonCodeEditor value={code} onChange={(value) => { setCode(value); setRunState({ status: "idle" }); }} />
@@ -267,6 +299,7 @@ export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
             </section>
           </div>
         )}
+      </div>
       </div>
     </main>
   );
