@@ -26,6 +26,10 @@ export const getRouteFromHash = (hash: string): AppRoute => {
     }
   }
 
+  if (hash === "#/practice" || hash === "#/practice/") {
+    return { name: "practiceList" };
+  }
+
   if (hash.startsWith(PRACTICE_PROBLEM_ROUTE_PREFIX)) {
     const slug = hash.slice(PRACTICE_PROBLEM_ROUTE_PREFIX.length).trim();
 
@@ -33,7 +37,6 @@ export const getRouteFromHash = (hash: string): AppRoute => {
       return { name: "practiceProblem", slug: decodeURIComponent(slug) };
     }
 
-    return { name: "practiceList" };
   }
 
   return { name: "home" };
