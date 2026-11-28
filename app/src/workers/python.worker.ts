@@ -29,18 +29,21 @@ self.onmessage = async (event: MessageEvent<RunRequest>) => {
     const harness = `
 import json, sys, io, contextlib, time
 sys.setrecursionlimit(2000)
+_output = io.StringIO()
 _cases = json.loads(${JSON.stringify(testCases)})
 _name = ${functionName}
 _fn = globals().get(_name) if _name else None
 if not callable(_fn):
     raise RuntimeError("The expected function was not found. Define the required function and run again.")
 _results = []
-for _case in _cases:
-    _started = time.perf_counter()
-    _value = _fn(*_case.get("args", []))
-    _elapsed = (time.perf_counter() - _started) * 1000
-    _results.append({"actual": _value, "expected": _case.get("expected"), "passed": _value == _case.get("expected"), "milliseconds": round(_elapsed, 2)})
-print(json.dumps({"results": _results}, default=str))
+with contextlib.redirect_stdout(_output):
+    for _case in _cases:
+        _started = time.perf_counter()
+        _value = _fn(*_case.get("args", []))
+        _elapsed = (time.perf_counter() - _started) * 1000
+        _results.append({"actual": _value, "expected": _case.get("expected"), "passed": _value == _case.get("expected"), "milliseconds": round(_elapsed, 2)})
+_output.write(json.dumps({"results": _results}, default=str))
+_output.getvalue()
 `;
     const output = await pyodide.runPythonAsync(`${event.data.code}\n${harness}`);
     const parsed = JSON.parse(String(output).trim().split("\n").pop() || "{}");
