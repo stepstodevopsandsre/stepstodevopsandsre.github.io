@@ -22,6 +22,9 @@ const getPyodide = () => {
 
 const formatPythonError = (error: unknown) => {
   const raw = error instanceof Error ? error.message : String(error);
+  if (raw.includes("Errno 29") || raw.includes("I/O error")) {
+    return "Python input could not be read. The practice runtime was refreshed; run the problem again or check the input format.";
+  }
   const indentation = raw.match(/IndentationError:\s*([^\n]+)/);
   if (indentation) return `Python indentation error: ${indentation[1].trim()} Use four spaces for each indentation level, or press Tab in the editor.`;
   const syntax = raw.match(/SyntaxError:\s*([^\n]+)/);
