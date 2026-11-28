@@ -18,6 +18,17 @@ const getPyodide = () => {
   return pyodidePromise;
 };
 
+const formatPythonError = (error: unknown) => {
+  const raw = error instanceof Error ? error.message : String(error);
+  const indentation = raw.match(/IndentationError:\s*([^\n]+)/);
+  if (indentation) return `Python indentation error: ${indentation[1].trim()} Use four spaces for each indentation level, or press Tab in the editor.`;
+  const syntax = raw.match(/SyntaxError:\s*([^\n]+)/);
+  if (syntax) return `Python syntax error: ${syntax[1].trim()} Check the line shown in the editor.`;
+  const name = raw.match(/NameError:\s*([^\n]+)/);
+  if (name) return `Python name error: ${name[1].trim()} Check that your variable and function names match the starter code.`;
+  return raw.length > 600 ? `${raw.slice(-600)}` : raw;
+};
+
 self.onmessage = async (event: MessageEvent<RunRequest>) => {
   if (event.data?.type !== "run") return;
   const startedAt = performance.now();
@@ -51,6 +62,6 @@ _output.getvalue()
     const passed = results.length > 0 && results.every((item: { passed: boolean }) => item.passed);
     self.postMessage({ type: "result", passed, results, durationMs: Math.round(performance.now() - startedAt) });
   } catch (error) {
-    self.postMessage({ type: "error", message: error instanceof Error ? error.message : String(error), durationMs: Math.round(performance.now() - startedAt) });
+    self.postMessage({ type: "error", message: formatPythonError(error), durationMs: Math.round(performance.now() - startedAt) });
   }
 };

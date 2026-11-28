@@ -50,17 +50,32 @@ const PythonCodeEditor = ({ value, onChange }: PythonCodeEditorProps) => {
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key !== "Tab") return;
-    event.preventDefault();
     const target = event.currentTarget;
     const start = target.selectionStart;
     const end = target.selectionEnd;
-    const nextValue = `${value.slice(0, start)}    ${value.slice(end)}`;
-    onChange(nextValue);
-    requestAnimationFrame(() => {
-      target.selectionStart = start + 4;
-      target.selectionEnd = start + 4;
-    });
+    if (event.key === "Tab") {
+      event.preventDefault();
+      const nextValue = `${value.slice(0, start)}    ${value.slice(end)}`;
+      onChange(nextValue);
+      requestAnimationFrame(() => {
+        target.selectionStart = start + 4;
+        target.selectionEnd = start + 4;
+      });
+      return;
+    }
+
+    if (event.key === "Enter" && start === end) {
+      const currentLine = value.slice(0, start).split("\n").pop() || "";
+      const indentation = currentLine.match(/^\s*/)?.[0] || "";
+      const extraIndent = /:\s*(#.*)?$/.test(currentLine) ? "    " : "";
+      const insertion = `\n${indentation}${extraIndent}`;
+      event.preventDefault();
+      onChange(`${value.slice(0, start)}${insertion}${value.slice(end)}`);
+      requestAnimationFrame(() => {
+        target.selectionStart = start + insertion.length;
+        target.selectionEnd = start + insertion.length;
+      });
+    }
   };
 
   const normalizeLeadingTabs = (source: string) => source.replace(/^(\s*)\t/gm, "$1    ");
