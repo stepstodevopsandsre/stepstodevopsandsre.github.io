@@ -525,6 +525,8 @@ function App() {
       document.title = `${activeQuestion?.question ?? "Interview Question"} | ${site.name}`;
     } else if (route.name === "practiceProblem") {
       document.title = `Practice Problem | ${site.name}`;
+    } else if (route.name === "practiceList") {
+      document.title = `Python Practice | ${site.name}`;
     } else {
       document.title = `${site.name} | ${site.tagline}`;
     }
