@@ -6,6 +6,7 @@ export type AppRoute =
   | { name: "home" }
   | { name: "blog"; slug: string }
   | { name: "interviewQuestion"; slug: string }
+  | { name: "practiceList" }
   | { name: "practiceProblem"; slug: string };
 
 export const getRouteFromHash = (hash: string): AppRoute => {
@@ -31,6 +32,8 @@ export const getRouteFromHash = (hash: string): AppRoute => {
     if (slug) {
       return { name: "practiceProblem", slug: decodeURIComponent(slug) };
     }
+
+    return { name: "practiceList" };
   }
 
   return { name: "home" };

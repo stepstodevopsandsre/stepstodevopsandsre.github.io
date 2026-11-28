@@ -23,6 +23,7 @@ type CompanionMood = "idle" | "welcome" | "focused" | "success" | "completed" | 
 
 const getContent = (route: AppRoute, blogs: BlogPost[], questions: InterviewQuestion[]): LearningContent | undefined => {
   if (route.name === "home") return undefined;
+  if (route.name === "practiceList" || route.name === "practiceProblem") return undefined;
   if (route.name === "blog") {
     const post = blogs.find((item) => item.slug === route.slug);
     if (!post) return { type: "blog", slug: route.slug, title: "Article unavailable", href: getBlogHref(route.slug), topics: [] };

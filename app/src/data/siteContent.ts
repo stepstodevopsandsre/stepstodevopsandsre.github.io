@@ -33,6 +33,7 @@ export const navigation: NavItem[] = [
   { label: "Home", href: "#home" },
   { label: "Blogs", href: "#blogs" },
   { label: "Interview Questions", href: "#interview-questions" },
+  { label: "Practice", href: "#/practice" },
   { label: "About", href: "#about" },
  /* { label: "GitHub", href: site.githubUrl, external: true }*/
 ];

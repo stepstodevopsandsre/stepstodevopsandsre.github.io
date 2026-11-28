@@ -15,6 +15,7 @@ import { InterviewQuestionFilters } from "@/components/InterviewQuestionFilters"
 import { InterviewQuestionPage } from "@/components/InterviewQuestionPage";
 import { MotionReveal } from "@/components/MotionReveal";
 import { PracticeProblemPage } from "@/components/PracticeProblemPage";
+import { PracticeProblemsPage } from "@/components/PracticeProblemsPage";
 import { SelectionAskAiPopover } from "@/components/SelectionAskAiPopover";
 import { ShareButton } from "@/components/ShareButton";
 import {
@@ -545,6 +546,8 @@ function App() {
           />
         ) : route.name === "practiceProblem" ? (
           <PracticeProblemPage slug={route.slug} />
+        ) : route.name === "practiceList" ? (
+          <PracticeProblemsPage />
         ) : (
           <HomePage
             posts={blogs}

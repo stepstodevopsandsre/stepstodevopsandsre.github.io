@@ -128,6 +128,30 @@ export const getInterviewQuestionEndpoint = (slug: string) =>
 export const getPracticeProblemEndpoint = (slug: string) =>
   getEndpoint(`/.netlify/functions/practice-problem?slug=${encodeURIComponent(slug)}`);
 
+export type PracticeProblemFilters = { topic?: string; difficulty?: string; search?: string };
+
+export const getPracticeProblemsEndpoint = (cursor?: string, pageSize = 10, filters: PracticeProblemFilters = {}) => {
+  const params = new URLSearchParams({ pageSize: String(pageSize) });
+  if (cursor) params.set("cursor", cursor);
+  if (filters.topic && filters.topic !== "all") params.set("topic", filters.topic);
+  if (filters.difficulty && filters.difficulty !== "all") params.set("difficulty", filters.difficulty);
+  if (filters.search?.trim()) params.set("search", filters.search.trim());
+  return getEndpoint(`/.netlify/functions/practice-problems?${params.toString()}`);
+};
+
+export type FetchPracticeProblemsResult = { problems: PracticeProblem[]; hasMore: boolean; nextCursor: string | null };
+
+export const fetchPublishedPracticeProblems = async (
+  cursor?: string,
+  pageSize = 10,
+  filters: PracticeProblemFilters = {}
+): Promise<FetchPracticeProblemsResult> => {
+  const response = await fetch(getPracticeProblemsEndpoint(cursor, pageSize, filters), { headers: { Accept: "application/json" } });
+  if (!response.ok) throw new Error(`Unable to load practice problems (${response.status}).`);
+  const payload = await response.json() as { problems?: PracticeProblem[]; hasMore?: boolean; nextCursor?: string | null };
+  return { problems: payload.problems ?? [], hasMore: payload.hasMore ?? false, nextCursor: payload.nextCursor ?? null };
+};
+
 /**
  * Replaces Notion syntax artifacts in text:
  * "****" -> " ", "**" -> " ", " —" -> "-", ", and" -> " and", ", or" -> " or"

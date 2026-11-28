@@ -110,8 +110,9 @@ const PythonCodeEditor = ({ value, onChange }: PythonCodeEditorProps) => {
         onScroll={syncScroll}
         spellCheck={false}
         aria-label="Python code editor"
+        wrap="off"
         className="relative z-10 min-h-[20rem] w-full resize-y overflow-auto border-0 bg-transparent p-4 pl-16 font-mono text-sm leading-6 text-transparent caret-white outline-none selection:bg-sky-400/30 focus:ring-2 focus:ring-accent/60"
-        style={{ WebkitTextFillColor: "transparent", tabSize: 4 }}
+        style={{ WebkitTextFillColor: "transparent", tabSize: 4, whiteSpace: "pre" }}
       />
     </div>
   );
