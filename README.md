@@ -216,13 +216,12 @@ and confirm again that the source is set to `GitHub Actions` on the renamed repo
 The Python practice feature uses a separate Notion data source so it cannot change the existing blog or interview-question flow.
 
 - Notion database: `Practice Problems`
-- Data source ID: `4265aace-fb86-8133-b67c-000bcaf602af`
-- Database ID for Netlify: `4265aace-fb86-8178-a826-da138d82f34c`
+- Add the database identifier only in Netlify environment settings. Do not commit the live value to this repository.
 - Required Netlify variable: `NOTION_PRACTICE_DATABASE_ID`
 - A row is public only when `Status` is `Done`.
 - Public route shape: `#/practice/<slug>`
 
-The first layer only loads the published problem content. The Python editor and Web Worker runtime are intentionally deferred to the next layer so existing pages do not pay the runtime payload cost.
+The practice route loads published problem content and starts the Python Web Worker only when the user runs code, so existing blog and interview pages do not pay the runtime execution cost.
 7. Confirm the Pages site is active in GitHub settings.
 8. Open the GitHub Pages URL and test the sample blog and interview-question routes.
 
