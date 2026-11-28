@@ -1,4 +1,4 @@
-import { AlertCircle, ArrowLeft, Code2, LoaderCircle } from "lucide-react";
+import { AlertCircle, ArrowLeft, CheckCircle2, Code2, Copy, LoaderCircle, Play, RotateCcw, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { fetchPracticeProblemArticle } from "@/lib/api";
 import type { PracticeProblemArticle } from "@/types";
@@ -10,15 +10,33 @@ type LoadState =
   | { status: "success"; article: PracticeProblemArticle }
   | { status: "error"; message: string };
 
+type RunState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "running" }
+  | { status: "success"; results: Array<{ actual: unknown; expected: unknown; passed: boolean; milliseconds: number }>; durationMs: number }
+  | { status: "failed"; message: string; durationMs?: number; results?: Array<{ actual: unknown; expected: unknown; passed: boolean; milliseconds: number }> };
+
 export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
   const [state, setState] = useState<LoadState>({ status: "loading" });
+  const [runState, setRunState] = useState<RunState>({ status: "idle" });
+  const [code, setCode] = useState("");
+
+  const draftKey = `sr-practice-draft-${slug}`;
 
   useEffect(() => {
     let cancelled = false;
     setState({ status: "loading" });
     fetchPracticeProblemArticle(slug)
       .then((article) => {
-        if (!cancelled) setState({ status: "success", article });
+        if (!cancelled) {
+          setState({ status: "success", article });
+          try {
+            setCode(localStorage.getItem(draftKey) || article.starterCode || "");
+          } catch {
+            setCode(article.starterCode || "");
+          }
+        }
       })
       .catch((error: Error) => {
         if (!cancelled) setState({ status: "error", message: error.message });
@@ -27,6 +45,60 @@ export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
       cancelled = true;
     };
   }, [slug]);
+
+  const runCode = () => {
+    if (state.status !== "success" || !code.trim()) return;
+    setRunState({ status: "loading" });
+    try {
+      localStorage.setItem(draftKey, code);
+    } catch {
+      // Draft persistence is best effort.
+    }
+
+    const worker = new Worker(new URL("../workers/python.worker.ts", import.meta.url));
+    let settled = false;
+    const timeout = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      worker.terminate();
+      setRunState({ status: "failed", message: "Execution took too long. Check for an infinite loop and try again." });
+    }, 8000);
+
+    worker.onmessage = (event: MessageEvent<RunState & { type: string }>) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
+      worker.terminate();
+      if (event.data.type === "result") {
+        const result = event.data as unknown as { passed: boolean; results: Array<{ actual: unknown; expected: unknown; passed: boolean; milliseconds: number }>; durationMs: number };
+        setRunState(result.passed
+          ? { status: "success", results: result.results, durationMs: result.durationMs }
+          : { status: "failed", message: "One or more tests did not pass.", results: result.results, durationMs: result.durationMs });
+      } else {
+        setRunState({ status: "failed", message: (event.data as unknown as { message: string }).message || "The code could not run." });
+      }
+    };
+    worker.onerror = () => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeout);
+      worker.terminate();
+      setRunState({ status: "failed", message: "The Python runtime could not start. Please try again." });
+    };
+    setRunState({ status: "running" });
+    worker.postMessage({ type: "run", code, functionName: state.article.functionName, testCases: state.article.testCases });
+  };
+
+  const resetCode = () => {
+    if (state.status !== "success") return;
+    setCode(state.article.starterCode || "");
+    setRunState({ status: "idle" });
+    try {
+      localStorage.removeItem(draftKey);
+    } catch {
+      // Ignore storage errors.
+    }
+  };
 
   const article = state.status === "success" ? state.article : undefined;
 
@@ -70,8 +142,24 @@ export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
         {article && (
           <section className="mt-6 overflow-hidden rounded-[2rem] border border-border/70 bg-surface/80 shadow-panel">
             <article className="article-content prose prose-slate max-w-none overflow-x-hidden p-5 dark:prose-invert sm:p-8" dangerouslySetInnerHTML={{ __html: article.html }} />
-            <div className="border-t border-border/70 bg-canvas/35 px-5 py-4 text-sm text-muted sm:px-8">
-              The editor will be added in the next layer. This first layer establishes the safe Notion-backed problem route without loading a Python runtime on existing pages.
+            <div className="border-t border-border/70 bg-canvas/35 p-5 sm:p-8">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div><p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Python playground</p><p className="mt-1 text-sm text-muted">Run your function against the visible examples. The runtime loads only when you run.</p></div>
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={resetCode} className="inline-flex items-center gap-2 rounded-full border border-border/70 px-3.5 py-2 text-sm font-semibold text-muted transition hover:border-accent/40 hover:text-text"><RotateCcw size={15} /> Reset</button>
+                  <button type="button" onClick={runCode} disabled={runState.status === "loading" || runState.status === "running"} className="inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:brightness-105 disabled:cursor-wait disabled:opacity-60"><Play size={15} /> {runState.status === "loading" ? "Preparing…" : runState.status === "running" ? "Running…" : "Run"}</button>
+                </div>
+              </div>
+              <div className="mt-4 overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-950 shadow-inner">
+                <div className="flex items-center justify-between border-b border-slate-700/80 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-400"><span>Python</span><button type="button" onClick={() => navigator.clipboard?.writeText(code)} className="inline-flex items-center gap-1.5 hover:text-white"><Copy size={13} /> Copy</button></div>
+                <textarea value={code} onChange={(event) => { setCode(event.target.value); setRunState({ status: "idle" }); }} spellCheck={false} aria-label="Python code editor" className="min-h-[18rem] w-full resize-y border-0 bg-transparent p-4 font-mono text-sm leading-6 text-slate-100 outline-none focus:ring-2 focus:ring-accent/60" />
+              </div>
+              {runState.status === "success" && (
+                <div className="mt-4 rounded-2xl border border-emerald-400/25 bg-emerald-400/10 p-4"><div className="flex items-center gap-2 text-sm font-semibold text-emerald-500"><CheckCircle2 size={17} /> All visible tests passed <span className="font-normal text-muted">in {runState.durationMs} ms</span></div><div className="mt-3 grid gap-2 sm:grid-cols-3">{runState.results.map((result, index) => <div key={index} className="rounded-xl border border-border/60 bg-surface/50 p-3 text-xs text-muted">Test {index + 1}: {String(result.actual)} <span className="text-emerald-500">✓</span></div>)}</div></div>
+              )}
+              {runState.status === "failed" && (
+                <div className="mt-4 rounded-2xl border border-rose-400/25 bg-rose-400/10 p-4"><div className="flex items-center gap-2 text-sm font-semibold text-rose-500"><XCircle size={17} /> Run needs attention</div><p className="mt-2 text-sm leading-6 text-muted">{runState.message || "One or more tests did not pass."}</p>{runState.results && <div className="mt-3 grid gap-2 sm:grid-cols-3">{runState.results.map((result, index) => <div key={index} className="rounded-xl border border-border/60 bg-surface/50 p-3 text-xs text-muted">Test {index + 1}: expected {String(result.expected)}, received {String(result.actual)} {result.passed ? "✓" : "×"}</div>)}</div>}</div>
+              )}
             </div>
           </section>
         )}

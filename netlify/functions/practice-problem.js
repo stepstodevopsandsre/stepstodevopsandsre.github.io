@@ -43,6 +43,11 @@ const configureNotionToMarkdown = (notionToMarkdown) => {
   });
 };
 
+const getStarterCode = (markdown) => {
+  const match = markdown.match(/```(?:python|py)\s*\n([\s\S]*?)\n```/i);
+  return match?.[1]?.trim() || "";
+};
+
 export const handler = async (event) => {
   const allowedOrigin = process.env.ALLOWED_ORIGIN || DEFAULT_ORIGIN;
   const requestOrigin = event.headers.origin || event.headers.Origin;
@@ -74,7 +79,7 @@ export const handler = async (event) => {
     return {
       statusCode: 200,
       headers: { ...createCorsHeaders(requestOrigin || allowedOrigin), "Content-Type": "application/json", "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=300" },
-      body: JSON.stringify({ ...problem, url: page.url, html, markdown, lastEditedTime: page.last_edited_time })
+      body: JSON.stringify({ ...problem, url: page.url, html, markdown, starterCode: getStarterCode(markdown), lastEditedTime: page.last_edited_time })
     };
   } catch (error) {
     return { statusCode: 500, headers: createCorsHeaders(requestOrigin || allowedOrigin), body: JSON.stringify({ error: logAndHideNotionError(error, "practice-problem", "This practice problem is temporarily unavailable. Please try again later.") }) };

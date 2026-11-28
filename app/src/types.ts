@@ -111,8 +111,14 @@ export type PracticeProblem = {
   language: string;
   functionName?: string;
   tags: string[];
+  testCases: PracticeTestCase[];
   href: string;
   publishedDate?: string;
+};
+
+export type PracticeTestCase = {
+  args: unknown[];
+  expected: unknown;
 };
 
 export type PracticeProblemArticle = PracticeProblem & {
@@ -120,4 +126,5 @@ export type PracticeProblemArticle = PracticeProblem & {
   html: string;
   markdown: string;
   lastEditedTime?: string;
+  starterCode?: string;
 };

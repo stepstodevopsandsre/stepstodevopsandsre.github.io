@@ -249,6 +249,15 @@ export const parseNotionPageToPracticeProblem = (page, slugProperty = "Slug") =>
   const language = cleanNotionText(getPropertyText(properties.Language)) || "Python";
   const functionName = cleanNotionText(getPropertyText(properties["Function Name"]));
   const tags = getPropertyList(properties.Tags);
+  let testCases = [];
+  try {
+    const parsed = JSON.parse(getPropertyText(properties["Test Cases"]) || "[]");
+    if (Array.isArray(parsed)) {
+      testCases = parsed.filter((item) => item && Array.isArray(item.args) && Object.prototype.hasOwnProperty.call(item, "expected"));
+    }
+  } catch {
+    testCases = [];
+  }
   const publishedDate = getPropertyText(properties["Published Date"]);
 
   return {
@@ -262,6 +271,7 @@ export const parseNotionPageToPracticeProblem = (page, slugProperty = "Slug") =>
     language,
     functionName: functionName || undefined,
     tags,
+    testCases,
     publishedDate: publishedDate || undefined,
     href: `#/practice/${slug}`,
     lastEditedTime: page.last_edited_time
