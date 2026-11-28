@@ -1,4 +1,4 @@
-import { AlertCircle, ArrowLeft, CheckCircle2, Code2, Copy, LoaderCircle, Play, RotateCcw, XCircle } from "lucide-react";
+import { AlertCircle, ArrowLeft, Check, CheckCircle2, Code2, Copy, LoaderCircle, Play, RotateCcw, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { fetchPracticeProblemArticle } from "@/lib/api";
 import type { PracticeProblemArticle } from "@/types";
@@ -110,6 +110,7 @@ export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const [runState, setRunState] = useState<RunState>({ status: "idle" });
   const [code, setCode] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const draftKey = `sr-practice-draft-${slug}`;
 
@@ -189,6 +190,16 @@ export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
     }
   };
 
+  const copyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setCopied(false);
+    }
+  };
+
   const article = state.status === "success" ? state.article : undefined;
 
   return (
@@ -243,7 +254,7 @@ export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
                 </div>
               </div>
               <div className="mt-4 overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-950 shadow-inner">
-                <div className="flex items-center justify-between border-b border-slate-700/80 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-400"><span>Python</span><button type="button" onClick={() => navigator.clipboard?.writeText(code)} className="inline-flex items-center gap-1.5 hover:text-white"><Copy size={13} /> Copy</button></div>
+                <div className="flex items-center justify-between border-b border-slate-700/80 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-400"><span>Python</span><button type="button" onClick={copyCode} className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 transition ${copied ? "bg-emerald-400/15 text-emerald-400" : "hover:text-white"}`} aria-live="polite">{copied ? <Check size={13} /> : <Copy size={13} />} {copied ? "Copied!" : "Copy"}</button></div>
                 <PythonCodeEditor value={code} onChange={(value) => { setCode(value); setRunState({ status: "idle" }); }} />
               </div>
               {runState.status === "success" && (
