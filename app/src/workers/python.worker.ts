@@ -37,6 +37,20 @@ self.onmessage = async (event: MessageEvent<RunRequest>) => {
 
   try {
     const pyodide = await getPyodide();
+    if (event.data.executionMode === "Stdin/Stdout") {
+      // Pyodide owns the browser-backed stdin stream. Replacing sys.stdin with
+      // io.StringIO works for some reads, but fails for sys.stdin.read() and
+      // input() with OSError: [Errno 29] I/O error. Feed complete lines through
+      // the supported stream adapter so every stdin/stdout problem uses the
+      // same execution contract.
+      const input = event.data.stdinOverride || event.data.testCases?.[0]?.stdin || "";
+      const lines = input.match(/[^\n]*(?:\n|$)/g)?.filter((line) => line.length > 0) ?? [];
+      let lineIndex = 0;
+      pyodide.setStdin({
+        stdin: () => (lineIndex < lines.length ? lines[lineIndex++] : undefined),
+        isatty: false
+      });
+    }
     const testCases = JSON.stringify(event.data.testCases || []);
     const functionName = JSON.stringify(event.data.functionName || "");
     const harness = `
@@ -47,12 +61,8 @@ _cases = json.loads(${JSON.stringify(testCases)})
 _name = ${functionName}
 _mode = ${JSON.stringify(event.data.executionMode || "Function")}
 if _mode == "Stdin/Stdout":
-    _input = ${JSON.stringify(event.data.stdinOverride ?? "")} or (_cases[0].get("stdin", "") if _cases else "")
-    _old_stdin = sys.stdin
-    sys.stdin = io.StringIO(_input)
     with contextlib.redirect_stdout(_output):
         exec(${JSON.stringify(event.data.code)}, globals())
-    sys.stdin = _old_stdin
     _actual = _output.getvalue().strip()
     _expected = _cases[0].get("expectedOutput", "") if _cases else ""
     _output.seek(0)

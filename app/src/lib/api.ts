@@ -128,6 +128,8 @@ export const getInterviewQuestionEndpoint = (slug: string) =>
 export const getPracticeProblemEndpoint = (slug: string) =>
   getEndpoint(`/.netlify/functions/practice-problem?slug=${encodeURIComponent(slug)}`);
 
+export const getPracticeProblemFacetsEndpoint = () => getEndpoint("/.netlify/functions/practice-problem-facets");
+
 export type PracticeProblemFilters = { topic?: string; difficulty?: string; search?: string };
 
 export const getPracticeProblemsEndpoint = (cursor?: string, pageSize = 10, filters: PracticeProblemFilters = {}) => {
@@ -140,6 +142,29 @@ export const getPracticeProblemsEndpoint = (cursor?: string, pageSize = 10, filt
 };
 
 export type FetchPracticeProblemsResult = { problems: PracticeProblem[]; hasMore: boolean; nextCursor: string | null };
+export type PracticeProblemFacets = { topics: string[]; difficulties: string[] };
+
+const PRACTICE_FACETS_CACHE_KEY = "sr-practice-facets-v1";
+const PRACTICE_FACETS_CACHE_TTL_MS = 10 * 60 * 1000;
+
+export const fetchPracticeProblemFacets = async (): Promise<PracticeProblemFacets> => {
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(PRACTICE_FACETS_CACHE_KEY) || "null") as { timestamp?: number; data?: PracticeProblemFacets } | null;
+    if (cached?.data && typeof cached.timestamp === "number" && Date.now() - cached.timestamp < PRACTICE_FACETS_CACHE_TTL_MS) return cached.data;
+  } catch {
+    // Ignore unavailable session storage.
+  }
+  const response = await fetch(getPracticeProblemFacetsEndpoint(), { headers: { Accept: "application/json" } });
+  if (!response.ok) throw new Error(`Unable to load practice filters (${response.status}).`);
+  const payload = await response.json() as Partial<PracticeProblemFacets>;
+  const data = { topics: payload.topics ?? [], difficulties: payload.difficulties ?? [] };
+  try {
+    sessionStorage.setItem(PRACTICE_FACETS_CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
+  } catch {
+    // Ignore unavailable session storage.
+  }
+  return data;
+};
 
 export const fetchPublishedPracticeProblems = async (
   cursor?: string,

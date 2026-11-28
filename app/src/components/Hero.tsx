@@ -37,7 +37,7 @@ export const Hero = () => (
           {site.description}
         </p>
 
-        <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+        <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <a
             href="#blogs"
             className="inline-flex items-center justify-center gap-2 rounded-full bg-text px-6 py-3.5 text-sm font-semibold text-canvas transition hover:-translate-y-0.5 hover:opacity-90"
@@ -50,6 +50,13 @@ export const Hero = () => (
             className="inline-flex items-center justify-center rounded-full border border-border bg-surface/85 px-6 py-3.5 text-sm font-semibold text-text transition hover:-translate-y-0.5 hover:border-accent/40 hover:bg-elevated"
           >
             Interview question bank
+          </a>
+          <a
+            href="#/practice"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-accent/25 bg-accentSoft/60 px-6 py-3.5 text-sm font-semibold text-accent transition hover:-translate-y-0.5 hover:border-accent/45 hover:bg-accentSoft"
+          >
+            Practice Python
+            <ArrowRight size={16} />
           </a>
         </div>
 

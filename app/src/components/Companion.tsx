@@ -114,12 +114,33 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
   }, []);
 
   useEffect(() => {
+    const handlePracticeRun = (event: Event) => {
+      const detail = (event as CustomEvent<{ slug?: string; status?: string }>).detail;
+      if (!content || content.type !== "practice" || detail?.slug !== content.slug) return;
+      if (detail.status === "editing") setMood("encouraging");
+      if (detail.status === "running") setMood("focused");
+      if (detail.status === "success") {
+        setProgress(100);
+        recordReadingProgress(content, 100);
+        setProfile(readLearningProfile());
+        setMood("completed");
+      }
+      if (detail.status === "failed" || detail.status === "error") setMood("error");
+    };
+    window.addEventListener("sr:practice-run", handlePracticeRun);
+    return () => window.removeEventListener("sr:practice-run", handlePracticeRun);
+  }, [content]);
+
+  useEffect(() => {
     if (!content) return;
     const handleScroll = () => {
       setIsScrolling(true);
       setOpen(false);
       window.clearTimeout(scrollTimer.current);
       scrollTimer.current = window.setTimeout(() => setIsScrolling(false), 420);
+      // A practice problem is completed by running its checks, not by
+      // reaching the bottom of the page. Scrolling must not change its state.
+      if (content.type === "practice") return;
       const height = document.documentElement.scrollHeight - window.innerHeight;
       if (height <= 0) return;
       const progress = Math.min(100, Math.max(0, (window.scrollY / height) * 100));
@@ -179,7 +200,7 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
       : mood === "encouraging"
         ? `Good progress. You are exploring ${content?.topics[0] ?? "a useful topic"}.`
         : content
-          ? `Reading ${content.type === "blog" ? "article" : "answer"}. Take your time.`
+          ? content.type === "practice" ? "Write, run, and learn one step at a time." : `Reading ${content.type === "blog" ? "article" : "answer"}. Take your time.`
           : recommendation
             ? recommendationReason
             : lastRead
@@ -215,7 +236,7 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
               <button type="button" className="sr-companion__action" onClick={() => {
                 window.dispatchEvent(new CustomEvent("sr:content-retry", { detail: { type: errorType, slug: content?.slug } }));
               }}><RotateCcw size={15} aria-hidden="true" /> Retry</button>
-              <a className="sr-companion__quiet-action" href={errorType === "interview" ? "#interview-questions" : "#blogs"} onClick={() => setOpen(false)}>Back to list</a>
+              <a className="sr-companion__quiet-action" href={errorType === "interview" ? "#interview-questions" : errorType === "practice" ? "#/practice" : "#blogs"} onClick={() => setOpen(false)}>Back to list</a>
             </div>
           ) : mood === "welcome" && lastRead ? (
             <a className="sr-companion__action" href={lastRead.href} onClick={() => setOpen(false)}><BookOpen size={15} aria-hidden="true" /> Continue reading <ArrowRight size={15} aria-hidden="true" /></a>
@@ -223,8 +244,8 @@ export const Companion = ({ route, blogs, questions }: CompanionProps) => {
             <a className="sr-companion__action" href={recommendation.href} onClick={() => setOpen(false)}>Explore suggestion <ArrowRight size={15} aria-hidden="true" /></a>
           ) : null}
           {content && (
-            <div className="sr-companion__progress-copy">
-              <span>Reading progress</span>
+          <div className="sr-companion__progress-copy">
+              <span>{content.type === "practice" ? "Practice progress" : "Reading progress"}</span>
               <strong>{progress}%</strong>
             </div>
           )}

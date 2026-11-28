@@ -142,7 +142,10 @@ export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
         }
       })
       .catch((error: Error) => {
-        if (!cancelled) setState({ status: "error", message: error.message });
+        if (!cancelled) {
+          setState({ status: "error", message: error.message });
+          window.dispatchEvent(new CustomEvent("sr:content-error", { detail: { type: "practice", slug } }));
+        }
       });
     return () => {
       cancelled = true;
@@ -152,6 +155,7 @@ export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
   const runCode = () => {
     if (state.status !== "success" || !code.trim()) return;
     setRunState({ status: "loading" });
+    window.dispatchEvent(new CustomEvent("sr:practice-run", { detail: { slug, status: "running" } }));
     try {
       localStorage.setItem(draftKey, code);
     } catch {
@@ -165,6 +169,7 @@ export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
       settled = true;
       worker.terminate();
       setRunState({ status: "failed", message: "Execution took too long. Check for an infinite loop and try again." });
+      window.dispatchEvent(new CustomEvent("sr:practice-run", { detail: { slug, status: "error" } }));
     }, 8000);
 
     worker.onmessage = (event: MessageEvent<RunState & { type: string }>) => {
@@ -177,8 +182,10 @@ export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
         setRunState(result.passed
           ? { status: "success", results: result.results, stdout: result.stdout, durationMs: result.durationMs }
           : { status: "failed", message: "One or more tests did not pass.", stdout: result.stdout, results: result.results, durationMs: result.durationMs });
+        window.dispatchEvent(new CustomEvent("sr:practice-run", { detail: { slug, status: result.passed ? "success" : "failed" } }));
       } else {
         setRunState({ status: "failed", message: (event.data as unknown as { message: string }).message || "The code could not run." });
+        window.dispatchEvent(new CustomEvent("sr:practice-run", { detail: { slug, status: "error" } }));
       }
     };
     worker.onerror = () => {
@@ -187,6 +194,7 @@ export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
       window.clearTimeout(timeout);
       worker.terminate();
       setRunState({ status: "failed", message: "The Python runtime could not start. Please try again." });
+      window.dispatchEvent(new CustomEvent("sr:practice-run", { detail: { slug, status: "error" } }));
     };
     setRunState({ status: "running" });
     worker.postMessage({ type: "run", code, functionName: state.article.functionName, executionMode: state.article.executionMode, stdinOverride: customInput, testCases: state.article.testCases });
@@ -289,7 +297,7 @@ export const PracticeProblemPage = ({ slug }: PracticeProblemPageProps) => {
         </div>
               <div className="mt-4 overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-950 shadow-inner">
                 <div className="flex items-center justify-between border-b border-slate-700/80 bg-slate-900 px-4 py-2 text-xs font-semibold text-slate-400"><span>Python</span><button type="button" onClick={copyCode} className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1 transition ${copied ? "bg-emerald-400/15 text-emerald-400" : "hover:text-white"}`} aria-live="polite">{copied ? <Check size={13} /> : <Copy size={13} />} {copied ? "Copied!" : "Copy"}</button></div>
-                <PythonCodeEditor value={code} onChange={(value) => { setCode(value); setRunState({ status: "idle" }); }} />
+                <PythonCodeEditor value={code} onChange={(value) => { setCode(value); setRunState({ status: "idle" }); window.dispatchEvent(new CustomEvent("sr:practice-run", { detail: { slug, status: "editing" } })); }} />
               </div>
               <div className="mt-4 rounded-2xl border border-border/70 bg-canvas/35 p-4"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">Visible test cases</p><div className="mt-3 grid gap-2 text-xs text-muted sm:grid-cols-2">{article.testCases.map((testCase, index) => <div key={index} className="rounded-xl border border-border/60 bg-surface/50 p-3">Test {index + 1}: {article.executionMode === "Stdin/Stdout" ? <code>{testCase.stdin?.trim()}</code> : <code>{JSON.stringify(testCase.args)}</code>}</div>)}</div>{article.executionMode === "Stdin/Stdout" && <label className="mt-4 block text-xs font-semibold text-muted">Custom input<textarea value={customInput} onChange={(event) => setCustomInput(event.target.value)} placeholder={article.testCases[0]?.stdin || "Enter stdin for your run"} className="mt-2 min-h-20 w-full rounded-xl border border-border/70 bg-surface/70 p-3 font-mono text-xs text-text outline-none focus:border-accent/50" /></label>}</div>
               {runState.status === "success" && (
